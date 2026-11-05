@@ -1,0 +1,38 @@
+LOCAL PRESENCE MINER v01.10 — WINDOWS TROUBLESHOOTING
+
+1. EXTRACT THE ZIP FIRST
+   Right-click the ZIP, choose Extract All, and open the extracted folder.
+
+2. KEEP THE FOLDER TOGETHER
+   MarketLensLocal.exe must remain beside the _internal folder.
+
+3. TRY DEMO MODE FIRST
+   Demo mode needs no API keys or internet connection.
+
+4. WINDOWS SECURITY PROMPT
+   This unsigned local build may trigger Windows SmartScreen. Confirm that the
+   file came from your trusted project package before choosing More info > Run anyway.
+
+5. SETTINGS
+   Real searches need a valid Google Maps API key. Settings become active as
+   soon as they are saved. Keys are encrypted for the current Windows user, so
+   copying settings.json to another Windows account will not make the key usable.
+
+6. LOGS AND DATA
+   Open %LOCALAPPDATA%\LocalPresenceMiner\logs\app.log for startup/search errors.
+   The SQLite database and generated outputs are also under
+   %LOCALAPPDATA%\LocalPresenceMiner\ by default.
+
+7. HONEST LIMITS
+   The app drafts outreach but does not send it. Static quote forms and chat
+   bubbles must be connected before a customer site goes live. Revenue impact,
+   profile ownership, and business-size claims require manual evidence.
+
+8. RENDERED VERIFICATION
+   Rendered checks use the installed Microsoft Edge browser. If Edge or the
+   packaged browser driver is unavailable, the search checkbox is disabled or
+   the audit records an explicit unavailable/failed state. Raw audits still work.
+
+9. PAGESPEED CONFIGURATION
+   PageSpeed checks require a PageSpeed API key in Settings. If the checkbox is
+   enabled without a key, the audit records configuration required and continues.

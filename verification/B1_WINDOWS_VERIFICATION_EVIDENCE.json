@@ -1,0 +1,19 @@
+{
+  "status": "B1 WINDOWS VERIFIED — READY FOR B2 IMPLEMENTATION",
+  "generated_at_utc": "2026-09-11T17:40:47.8617291Z",
+  "parent_tree_sha256": "33c4ab77609cb17dd14bad240ba1d5000e1d4f39641cda6181555c3db7be5adf",
+  "candidate_zip_sha256": "921f1e2c0cc5971603aa7af1f872ecd99bde794e841aa2607809c710ecd9d1ba",
+  "candidate_declared_tree_sha256": "5a1a0a33721c7179030a3a34e134f6a32d054d5bf669a5fcfd24a567fdde9981",
+  "tested_tree_sha256": "b80b068ad7a7a18560952753cb46807dd3e8261a4eba6489e0d717c35bafa0fc",
+  "tested_file_count": 211,
+  "dedicated_subset": "50 passed",
+  "full_pytest": "297 passed",
+  "ruff": "PASS",
+  "compileall": "PASS",
+  "mypy": "95 baseline errors, 0 new substantive errors",
+  "pyside6": "PASS",
+  "offscreen_ui": "PASS",
+  "migration": "2 focused migration/integrity tests passed",
+  "changed_files": "B1 source plus bounded test-fixture compatibility updates",
+  "b2_started": false
+}

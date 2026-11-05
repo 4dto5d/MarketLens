@@ -1,0 +1,11 @@
+{
+  "candidate_files": 272,
+  "candidate_sha256": "2a244cf6de8fafaad58e56e59ba8bfb5843f1e70294fc8e8d91ab74ef6f9fbee",
+  "parent_files": 272,
+  "parent_sha256": "4ab4420bd07ba9ca57472578fb12549eee10a83aae47cbc36a2381576a321ae9",
+  "modified": 4,
+  "added": 0,
+  "deleted": 0,
+  "input_members": 400,
+  "entire_input_unchanged": true
+}

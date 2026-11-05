@@ -1,0 +1,928 @@
+{
+  "created_at_utc": "2026-09-03T02:07:24.329216+00:00",
+  "baseline_application_version": "0.1.11",
+  "target_release_version": "0.1.12",
+  "source_identity": "2026-09-01__local-presence-miner__v01.11-credibility-engine-v2-source.zip",
+  "source_zip_sha256": "D3FD838AE21E3F29EBA8AE0445952E471B685965708DE6CC156588C6A403DC80",
+  "audit_bundle_identity": "marketlens-local-v0111-independent-audit-bundle.zip",
+  "audit_bundle_sha256": "E4A01B66176C7145EC32DDF8637F81316326825A0301B1D2B667C3541CDAE16B",
+  "working_tree_identity": "marketlens-local-v0112-pass1-work/marketlens-local",
+  "baseline_copy_identity": "marketlens-local-v0112-pass1-work/baseline-v0111",
+  "provenance_timing_note": "Reconstructed from an unchanged immutable v0.1.11 release ZIP after the CYA execution guardrails arrived. Implementation edits had already begun before this manifest was generated. The in-progress source was separately snapshotted before extraction/reconciliation. This is not a contemporaneous pre-edit manifest.",
+  "audited_source_files": 158,
+  "audit_hash_mismatches": [],
+  "zip_file_count": 170,
+  "packaging_files_absent_from_audit_export_but_present_in_source_zip": [
+    ".env.example",
+    ".gitignore",
+    "LICENSE",
+    "local_presence_miner/assets/app-icon.ico",
+    "local_presence_miner/assets/app-icon.png",
+    "local_presence_miner/assets/styles.qss",
+    "local_presence_miner/templates/competitor_comparison.html.j2",
+    "local_presence_miner/templates/mockup.html.j2",
+    "local_presence_miner/templates/proposal.html.j2",
+    "local_presence_miner/templates/report.html.j2",
+    "local_presence_miner/templates/report_index.html.j2",
+    "sample_data/demo_businesses.json"
+  ],
+  "required_files_missing": [],
+  "git": {
+    "repository_root": "C:/Users/allin/OneDrive/Documents/Local Presence Miner",
+    "parent_repository_hash": "d574e7984af628f3b8575b671f61045ef72b6201",
+    "parent_repository_branch": "local-presence-miner-v0109",
+    "exact_tree_commit_available": false,
+    "reason": "This exact v0.1.11 source directory is untracked inside the parent repository.",
+    "status_for_exact_tree": "?? ./"
+  },
+  "known_baseline_test_status": {
+    "pytest": {
+      "command": "\"C:\\Users\\allin\\OneDrive\\Documents\\Local Presence Miner\\local-presence-miner-v0111-credibility-engine-release\\local-presence-miner\\.build-venv\\Scripts\\python.exe\" -m pytest -q",
+      "exit_code": 0,
+      "finished_at_utc": "2026-09-01T22:32:46.751910+00:00"
+    },
+    "ruff": {
+      "command": "\"C:\\Users\\allin\\OneDrive\\Documents\\Local Presence Miner\\local-presence-miner-v0111-credibility-engine-release\\local-presence-miner\\.build-venv\\Scripts\\python.exe\" -m ruff check .",
+      "exit_code": 0,
+      "finished_at_utc": "2026-09-01T22:32:48.698461+00:00"
+    },
+    "mypy": {
+      "command": "\"C:\\Users\\allin\\OneDrive\\Documents\\Local Presence Miner\\local-presence-miner-v0111-credibility-engine-release\\local-presence-miner\\.build-venv\\Scripts\\python.exe\" -m mypy local_presence_miner app.py",
+      "exit_code": 1,
+      "finished_at_utc": "2026-09-01T22:33:12.978831+00:00"
+    }
+  },
+  "known_baseline_summary": "126 pytest PASS; Ruff PASS; mypy PRE-EXISTING FAILURE: 111 errors across 23 files.",
+  "pre_addendum_in_progress_files": [
+    "local_presence_miner/database/migrations.py",
+    "local_presence_miner/database/pricing_repository.py",
+    "local_presence_miner/database/repositories.py",
+    "local_presence_miner/database/schema.py",
+    "local_presence_miner/services/adaptive_sales_asset_service.py",
+    "local_presence_miner/services/call_guide_service.py",
+    "local_presence_miner/services/contact_discovery.py",
+    "local_presence_miner/services/credibility_service.py",
+    "local_presence_miner/services/outbound_validation_service.py",
+    "local_presence_miner/services/outreach_service.py",
+    "local_presence_miner/services/proof_dependency_service.py",
+    "local_presence_miner/services/public_url_safety.py",
+    "local_presence_miner/services/rendered_auditor.py",
+    "local_presence_miner/services/website_auditor.py",
+    "local_presence_miner/ui/dialogs/lead_detail_dialog.py",
+    "local_presence_miner/ui/dialogs/outreach_editor_dialog.py",
+    "local_presence_miner/ui/dialogs/seller_proof_dialog.py",
+    "local_presence_miner/ui/widgets/outreach_widget.py"
+  ],
+  "files": [
+    {
+      "path": ".env.example",
+      "sha256": "F355C41272A11DEC581A1C76D1EE46CC43700D3AA926EFC860E82B357FA9BB90",
+      "bytes": 357
+    },
+    {
+      "path": ".gitignore",
+      "sha256": "52C59D81F9E65B37304FAE8A8131D53F1F391A9F25EF1F570A85C33B85B0C947",
+      "bytes": 179
+    },
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "608793EFD653AE88FA8D9E8E891E19A43F8A57108EDAE7775FEFAD164910983C",
+      "bytes": 15127
+    },
+    {
+      "path": "CODEX_HANDOFF_OUTREACH.md",
+      "sha256": "DAC97733F354E658AEF68BBD349EE53E102068DA60702FE5FD32E3957AC3C157",
+      "bytes": 2302
+    },
+    {
+      "path": "CODEX_HANDOFF_V0109.md",
+      "sha256": "EFE5C0B7C8A657DE39BDFE316AC92D2A7150AB4F5D43B11D5C92E440C821D1BC",
+      "bytes": 1334
+    },
+    {
+      "path": "CODEX_HANDOFF_V0110.md",
+      "sha256": "0D59B1316C25193E888152AFB8091ED5985877DC4917A370907BF9D2F26F5366",
+      "bytes": 5469
+    },
+    {
+      "path": "CODEX_HANDOFF_V0111_INTEGRITY.md",
+      "sha256": "D90F4A4274C569C1C416F887C0220FEAEF130804CF7D7551A62D41169347337B",
+      "bytes": 4107
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "6056BE583F258625D4C25307F296F5E18DF541999A58C76A7D71FF1DF331C4BA",
+      "bytes": 1090
+    },
+    {
+      "path": "OUTREACH_ENGINE_PATCH_NOTES.md",
+      "sha256": "A18B052CF9F34895B23F0F7F69F62FBA0421D5365D0D56C89D9BCD4725D8B1EA",
+      "bytes": 5989
+    },
+    {
+      "path": "PATCH_NOTES.md",
+      "sha256": "383CC3B3A949F9353C1B124D7F5E21CBCD45842D726EB2C5BAF432F433395FF5",
+      "bytes": 2332
+    },
+    {
+      "path": "README.md",
+      "sha256": "271EDF4B5F3696B5C87544F13726FB071F27B7E02FBF8C03DD08DC21BA2C23A0",
+      "bytes": 77916
+    },
+    {
+      "path": "V0109_QUALIFICATION_NOTES.md",
+      "sha256": "14C83F263222504F038213C8CE3CDBCB7B1CABD3DC8DCBAFF325232DE9A56C55",
+      "bytes": 3438
+    },
+    {
+      "path": "V0110_ADAPTIVE_SALES_COPILOT_NOTES.md",
+      "sha256": "8D4084E82CC27B060BEF508DB6105E5B1FAA0DD189CF1DADD24D876E9C6E3AC7",
+      "bytes": 3125
+    },
+    {
+      "path": "V0111_CREDIBILITY_ENGINE.md",
+      "sha256": "A177CC46F7B38D6047BCCE11CF7118568968E331F28C7FBD78D5BDAF6FA64EEF",
+      "bytes": 4093
+    },
+    {
+      "path": "V0111_INTEGRITY_STATE_HARDENING.md",
+      "sha256": "7DFFFF5081A952DAD12826749E3571BBD13E886ABF94AF1D2EA2C823405EEBB3",
+      "bytes": 4844
+    },
+    {
+      "path": "VERIFICATION_STATUS.md",
+      "sha256": "1D41DC179EBB1772E9EAA8D56F0607B4F88EE3DC3115574FD04344D20B56F65F",
+      "bytes": 3277
+    },
+    {
+      "path": "app.py",
+      "sha256": "88A28A9B70F2D585BFE6095278DE9EAB9D78498719AF85118F1510CB51897E05",
+      "bytes": 1478
+    },
+    {
+      "path": "build_windows.ps1",
+      "sha256": "3336119A460C424BF4E840D93311A9B4EE95AD62F7540D5BD812CD5FFB4880E1",
+      "bytes": 3150
+    },
+    {
+      "path": "docs/architecture.md",
+      "sha256": "9D6DE1DA610DE8844975207DC7F94D098C7F8961187AE026C30C558E940C646C",
+      "bytes": 621
+    },
+    {
+      "path": "docs/compliance.md",
+      "sha256": "0B2F3BE1C612E01B8833EE0BDEF3A2117AFBCB1A8DFD23156B2D0BB8E19FD34B",
+      "bytes": 736
+    },
+    {
+      "path": "docs/data-model.md",
+      "sha256": "212D5411C8DC48FF3103154FE8DBFD6608F6FFC1E25013F466BE8C20D54C61E6",
+      "bytes": 1283
+    },
+    {
+      "path": "docs/v0108-ui-inventory.md",
+      "sha256": "CEA81AD6096FA5BB64D352ED8701FA808AB265FEEF062305E73CAFEFE5C9CEE3",
+      "bytes": 14260
+    },
+    {
+      "path": "local_presence_miner/__init__.py",
+      "sha256": "9E5943AC7D23C8284CBAE62B2B4082E7989304A50D4D48DE8ED730C72505D844",
+      "bytes": 23
+    },
+    {
+      "path": "local_presence_miner/__main__.py",
+      "sha256": "A85E4BD3BFDC88AAD6C2924115AA2346C2DBA336AE0186EAB2E09440E5D265F2",
+      "bytes": 135
+    },
+    {
+      "path": "local_presence_miner/assets/app-icon.ico",
+      "sha256": "36CA625C6B307FB462FE0221F2AA8FFEC86B86C151AC76AD9257C4FB486088AB",
+      "bytes": 104584
+    },
+    {
+      "path": "local_presence_miner/assets/app-icon.png",
+      "sha256": "3FB5C9931B249170650D06C8FC1405D0DBBDF882B92930E1BBEB093BD46339DE",
+      "bytes": 1197287
+    },
+    {
+      "path": "local_presence_miner/assets/styles.qss",
+      "sha256": "74892AC0C3AE0B61E9F0E8D0E1681A133F940358BC60D0DDCA5D1B130F292B70",
+      "bytes": 609
+    },
+    {
+      "path": "local_presence_miner/cli.py",
+      "sha256": "DBDCAB6F4D4F727C9CB07D710FBFE15FC8321E753B39C23BEA39341113CCFF22",
+      "bytes": 12418
+    },
+    {
+      "path": "local_presence_miner/config.py",
+      "sha256": "C6A0931EDD19AE9EAC53B243AB4E365207CBCA56C1542D7B7E8F8BE690027125",
+      "bytes": 6032
+    },
+    {
+      "path": "local_presence_miner/database/__init__.py",
+      "sha256": "01BA4719C80B6FE911B091A7C05124B64EEECE964E09C058EF8F9805DACA546B",
+      "bytes": 1
+    },
+    {
+      "path": "local_presence_miner/database/engine.py",
+      "sha256": "B5D4BCF44915126A7AE0333979BA98AE183531278E356A321120471ED0F3648A",
+      "bytes": 428
+    },
+    {
+      "path": "local_presence_miner/database/migrations.py",
+      "sha256": "84777C54144F41C07329B9A737B58A58D54CD7B98C748F49E79B8D8DA80E764C",
+      "bytes": 16497
+    },
+    {
+      "path": "local_presence_miner/database/pricing_repository.py",
+      "sha256": "7B7C4CA85A5B431DE7B2981F6C5E91F202798675BEB366179D423BD6939FA106",
+      "bytes": 12858
+    },
+    {
+      "path": "local_presence_miner/database/repositories.py",
+      "sha256": "764ACE67044DEE6D3247C0F63AEB0396A40968380D0F1D986B756054B46D1E2D",
+      "bytes": 38401
+    },
+    {
+      "path": "local_presence_miner/database/schema.py",
+      "sha256": "49E49BCDA9DA2BE67F986B22EEDF8F88F7424F44B72CA37E51BC85312AD598C2",
+      "bytes": 22745
+    },
+    {
+      "path": "local_presence_miner/domain/__init__.py",
+      "sha256": "01BA4719C80B6FE911B091A7C05124B64EEECE964E09C058EF8F9805DACA546B",
+      "bytes": 1
+    },
+    {
+      "path": "local_presence_miner/domain/categories.py",
+      "sha256": "1650E44C92C6457FD52E6F8B75366248512B0704F09EEA4F7EDD84E402CC0BBA",
+      "bytes": 8856
+    },
+    {
+      "path": "local_presence_miner/domain/competitor_matching.py",
+      "sha256": "C7BDCA1772923C1DC48A6A30EB3D146445DAC06233A4F9B433D7B6E8B328E2C6",
+      "bytes": 8248
+    },
+    {
+      "path": "local_presence_miner/domain/enums.py",
+      "sha256": "D30F7E8DF11318911F0AA1BB953E38F446D8387984B274A51E121421BAA9A4B8",
+      "bytes": 1196
+    },
+    {
+      "path": "local_presence_miner/domain/models.py",
+      "sha256": "FE9B3FC6F89C6BFC10A783AB54A5BA8F3CB11916DEFED278F2D37D34CD83E983",
+      "bytes": 4633
+    },
+    {
+      "path": "local_presence_miner/domain/scoring.py",
+      "sha256": "AA3AA404919F7D0B3F862947944CDD00E6000509D86AA10F0ECEC4906FEC010E",
+      "bytes": 8719
+    },
+    {
+      "path": "local_presence_miner/domain/verification.py",
+      "sha256": "0FB07A31E50101525B23C8D6FCA510539F5370F3ABE5389CB6CD8ADD4DC002B1",
+      "bytes": 3534
+    },
+    {
+      "path": "local_presence_miner/logging_config.py",
+      "sha256": "2734864163124C0BFD072282F88C01565767DF048F63BF7E5E9143C8D9851FE0",
+      "bytes": 528
+    },
+    {
+      "path": "local_presence_miner/services/__init__.py",
+      "sha256": "01BA4719C80B6FE911B091A7C05124B64EEECE964E09C058EF8F9805DACA546B",
+      "bytes": 1
+    },
+    {
+      "path": "local_presence_miner/services/adaptive_outreach_service.py",
+      "sha256": "863D5D436A91FB3792474E4828AEB0A9510882F4854D69E958E70BBD524A6223",
+      "bytes": 18830
+    },
+    {
+      "path": "local_presence_miner/services/adaptive_sales_asset_service.py",
+      "sha256": "02C9BD020C5C77C4C37B83C02ADAB2A97CE112DBB5D27E735FE2ACEC233153C2",
+      "bytes": 3737
+    },
+    {
+      "path": "local_presence_miner/services/batch_contact_discovery_service.py",
+      "sha256": "39C9B63D042A1DDA28C72988AC5033E0B551E8C3DA266A2021D672FF47F45660",
+      "bytes": 4363
+    },
+    {
+      "path": "local_presence_miner/services/call_guide_service.py",
+      "sha256": "93D3EB0831BA98ABBB314B526510274BEC41735F52099D477A04ABA1F7254686",
+      "bytes": 47221
+    },
+    {
+      "path": "local_presence_miner/services/comparable_offer_service.py",
+      "sha256": "343E5A928C279D10B7FA0655AE0BC99D806F96FFF2E21A4EDF67098A81C2A076",
+      "bytes": 5033
+    },
+    {
+      "path": "local_presence_miner/services/comparison_service.py",
+      "sha256": "24D873DCB5142BAA404CA22BADE6EA0AF1C7D8C6B6E9718D66A1C8287B95C27E",
+      "bytes": 10481
+    },
+    {
+      "path": "local_presence_miner/services/competitor_service.py",
+      "sha256": "8AA3A42193AE5CA15C5FF35D5E9B76253B2D06EE96D20F01CD397EF15324CB4C",
+      "bytes": 1181
+    },
+    {
+      "path": "local_presence_miner/services/contact_discovery.py",
+      "sha256": "03C2E39B110B435313F5B51A0AFB28854E89007B25B2E9284AFF470BAE810669",
+      "bytes": 17788
+    },
+    {
+      "path": "local_presence_miner/services/conversation_state_service.py",
+      "sha256": "EC92A5D9ED1AA0D0764B3508A4DC36B03CD0EC1562B02A759B394160ABEE61FB",
+      "bytes": 4760
+    },
+    {
+      "path": "local_presence_miner/services/credibility_service.py",
+      "sha256": "6E22115FE130C99C155A0CF16248215B03C9BDE1F062953F6008F9EBC4B1ACBB",
+      "bytes": 15172
+    },
+    {
+      "path": "local_presence_miner/services/demo_data.py",
+      "sha256": "D3C67877C8EDFAB95B303F8EED92A5E440F08F4BAB4233A58F59E4B2B3E860AB",
+      "bytes": 6099
+    },
+    {
+      "path": "local_presence_miner/services/export_service.py",
+      "sha256": "309861C3DC6309B05E8D46D2F16284435BF2649EB20444B9ABC2C3C68067CF39",
+      "bytes": 5000
+    },
+    {
+      "path": "local_presence_miner/services/google_places.py",
+      "sha256": "0D8DFAC28BC7DA4B2C8C2ACFE07A3F9B98B6CB25848984210AB10B16834927F1",
+      "bytes": 15581
+    },
+    {
+      "path": "local_presence_miner/services/google_presence_service.py",
+      "sha256": "AFEFE451C822A6D1A9498D6BA863C9FC8B8F1B0F499E1796E6787D7B0F18721C",
+      "bytes": 18360
+    },
+    {
+      "path": "local_presence_miner/services/lead_package_service.py",
+      "sha256": "1A07BFA952A47D78EB8267EC543859379F39C91F8FEBF4E2327DE3E41439F623",
+      "bytes": 4279
+    },
+    {
+      "path": "local_presence_miner/services/mockup_service.py",
+      "sha256": "463EBB3B6944897AD56AFD87AB553786EC4D91B2D7189CAD705A4F84A93650E2",
+      "bytes": 2083
+    },
+    {
+      "path": "local_presence_miner/services/offer_builder.py",
+      "sha256": "8CFB8F50CC40799A9AA451CB1130BB4EDC02A2BC761C7857A28719442F02FAF8",
+      "bytes": 4573
+    },
+    {
+      "path": "local_presence_miner/services/offer_service.py",
+      "sha256": "7E041249DF78940774584B66B921E2D4136078CC690B0E9CF77A09029B9EDFCD",
+      "bytes": 4794
+    },
+    {
+      "path": "local_presence_miner/services/outreach_batch_service.py",
+      "sha256": "A12F2A8A5A4799B22F3EE361E875C6258EDE68B5EFC5BE3C577E60792F875A9E",
+      "bytes": 5764
+    },
+    {
+      "path": "local_presence_miner/services/outreach_planner.py",
+      "sha256": "6C02B478DB506680EECC8C363DA0122841CB73B94BB2FAD54FF2C18B564FB7E4",
+      "bytes": 4701
+    },
+    {
+      "path": "local_presence_miner/services/outreach_service.py",
+      "sha256": "56FE0FBFF3F31208A56E7C3891E8C7AD6782F1A1D5EBF3E49D5A76EC9C642D54",
+      "bytes": 12869
+    },
+    {
+      "path": "local_presence_miner/services/owner_brief.py",
+      "sha256": "49E476AED022601F3FD03C35A2B15B56A5B4FD9B29DF7E63D73D34A606493B11",
+      "bytes": 4469
+    },
+    {
+      "path": "local_presence_miner/services/pagespeed.py",
+      "sha256": "6DD86954C8FAB2518BEB4FB112A309DF06771507ECFE643C76E88049F2A4E382",
+      "bytes": 2543
+    },
+    {
+      "path": "local_presence_miner/services/preflight_service.py",
+      "sha256": "7F8E8633D85F7F73D1DAC7C82716F1A9B1098FE4B9C97A43150B09DD6795AF3C",
+      "bytes": 3555
+    },
+    {
+      "path": "local_presence_miner/services/pricing_calibration.py",
+      "sha256": "87ED0066597DC7367C36157BAD08589EEE7CD675B5A49044616AEE651D87F50E",
+      "bytes": 3367
+    },
+    {
+      "path": "local_presence_miner/services/pricing_menu.py",
+      "sha256": "9754A071E9562A7F3E98BADF9E4BFB906486315DDCDAE70595116DFFDCF1977B",
+      "bytes": 4809
+    },
+    {
+      "path": "local_presence_miner/services/prompt_parser.py",
+      "sha256": "94712B7127345417B20B522665A1F093080CCFC8C22A5B2149CED3B5642A14BA",
+      "bytes": 2598
+    },
+    {
+      "path": "local_presence_miner/services/proposal_service.py",
+      "sha256": "B0A771199EB2E42C6BF018A6A53B22152D063C960A0149A1623020B998883F76",
+      "bytes": 3323
+    },
+    {
+      "path": "local_presence_miner/services/qualification_service.py",
+      "sha256": "F222DE7400030424920104BC5900084940AB65A764E63EC474F931318C299560",
+      "bytes": 19697
+    },
+    {
+      "path": "local_presence_miner/services/rendered_auditor.py",
+      "sha256": "F1CAD4F61EFDB42DA133B6E686EBCC67DFF23AA8D75C7525D37CD6CFEFD8DB08",
+      "bytes": 9462
+    },
+    {
+      "path": "local_presence_miner/services/report_service.py",
+      "sha256": "CB7AACE39B8DEFFCBEE61402D46287CB42127C1CE1CAB4C27257498F3FB40398",
+      "bytes": 4156
+    },
+    {
+      "path": "local_presence_miner/services/search_workflow.py",
+      "sha256": "A83D8AA15AF7717E7B8D06ED634969DA5E9CA5DD05517964E0DD81423E3E1E59",
+      "bytes": 8806
+    },
+    {
+      "path": "local_presence_miner/services/seller_pricing_service.py",
+      "sha256": "E32EF2418A2CBB8B8478176DE9796C022C4742CF77B2C472CDB617D3382374C1",
+      "bytes": 7286
+    },
+    {
+      "path": "local_presence_miner/services/seller_proof_service.py",
+      "sha256": "945A8AF7ED5F7553B252C77AC2E0BC589CA1F1B68D84F97316E51FD81FD4B683",
+      "bytes": 6743
+    },
+    {
+      "path": "local_presence_miner/services/static_site_service.py",
+      "sha256": "4A5FD2D0CF03F1612E36542330378F3B6D22B3D338F2990A00C82D08390D0353",
+      "bytes": 19689
+    },
+    {
+      "path": "local_presence_miner/services/suppression_service.py",
+      "sha256": "CBA16E05C227A96B9E5F5DB52E155717A3DEBD037870B48ADA00EED06A310C3A",
+      "bytes": 832
+    },
+    {
+      "path": "local_presence_miner/services/v0111_backfill_service.py",
+      "sha256": "A15AE9AC24EDD2CCD753E4289A87603DE6526C3F6681539D002B301C1910817D",
+      "bytes": 1456
+    },
+    {
+      "path": "local_presence_miner/services/website_auditor.py",
+      "sha256": "6BD099131B773CFD06F8BBBE4D31D9E2D69D8C0A782D7FD669CDAC72BC886D44",
+      "bytes": 14411
+    },
+    {
+      "path": "local_presence_miner/services/website_builder_prompt_service.py",
+      "sha256": "0612055E092447FECEDDFFE0CD7D26C3B13E90CEB4DE7AD2C2088FE00FE76C57",
+      "bytes": 16206
+    },
+    {
+      "path": "local_presence_miner/templates/competitor_comparison.html.j2",
+      "sha256": "45F062B40443788787B70D45AD364F8799074D4A388359DF5697FC62FE145242",
+      "bytes": 3376
+    },
+    {
+      "path": "local_presence_miner/templates/mockup.html.j2",
+      "sha256": "645B1BBA006AAD76285730939B1DC2764B097208FE791C8D79F31F606FE4B714",
+      "bytes": 2235
+    },
+    {
+      "path": "local_presence_miner/templates/proposal.html.j2",
+      "sha256": "247A22B920CE6F7F2F4A19ED52D4119171AACB615B4330861EA07028C3CB3FC5",
+      "bytes": 6911
+    },
+    {
+      "path": "local_presence_miner/templates/report.html.j2",
+      "sha256": "8C67B661F522880A5802295E924F102516127079072F320DE2ADA242B64ED519",
+      "bytes": 7504
+    },
+    {
+      "path": "local_presence_miner/templates/report_index.html.j2",
+      "sha256": "75CB71D7958E2EDB393DE209A19B024C5B5A36C27B4C197802282B6C3C2574F3",
+      "bytes": 258
+    },
+    {
+      "path": "local_presence_miner/time_utils.py",
+      "sha256": "BBE7906ABFD48E3439FB51047358DF2ED0A1CA811119CD43F14634AB6DEA2D0B",
+      "bytes": 257
+    },
+    {
+      "path": "local_presence_miner/ui/__init__.py",
+      "sha256": "01BA4719C80B6FE911B091A7C05124B64EEECE964E09C058EF8F9805DACA546B",
+      "bytes": 1
+    },
+    {
+      "path": "local_presence_miner/ui/components/__init__.py",
+      "sha256": "1837DACAF150AA77657914B031B030E9873687BB970263CC8BD01C2131A87200",
+      "bytes": 1586
+    },
+    {
+      "path": "local_presence_miner/ui/components/action_toolbar.py",
+      "sha256": "E6233EA9D75974927A7D05F162B20F5E3B9321347378C5EA12522C5CE12C2D9C",
+      "bytes": 1427
+    },
+    {
+      "path": "local_presence_miner/ui/components/confirmation_dialog.py",
+      "sha256": "CF07EF24C8927490B75B2E74DEA3035E65B326920775F424C6C25F12BB0E309C",
+      "bytes": 1176
+    },
+    {
+      "path": "local_presence_miner/ui/components/data_table.py",
+      "sha256": "BF71AA9AA847EF9335CEBAAC2EE886D6CF30D01063D4C2D4F7B548205E5A8639",
+      "bytes": 1799
+    },
+    {
+      "path": "local_presence_miner/ui/components/empty_state.py",
+      "sha256": "1D1BF2213DCCE8CDF2A3785BACC7BA7A0CCB317A003AE76069E25A565226496A",
+      "bytes": 1529
+    },
+    {
+      "path": "local_presence_miner/ui/components/field_message.py",
+      "sha256": "B1F5A9F1EB1BCFF2C08A1E136540C13C328EE113E6D913765E12A5C2E5293BF3",
+      "bytes": 1341
+    },
+    {
+      "path": "local_presence_miner/ui/components/info_banner.py",
+      "sha256": "BC5333C4E0372DD3A479F3AC31336096579191518491197FDA8A2DC267FD24C2",
+      "bytes": 1144
+    },
+    {
+      "path": "local_presence_miner/ui/components/metric_card.py",
+      "sha256": "E2B8A209C7C5CC9FED4124F065B8A17C61C1713995ADF0C408BD52EC7DA5C556",
+      "bytes": 1372
+    },
+    {
+      "path": "local_presence_miner/ui/components/page_header.py",
+      "sha256": "F77DF60A7A0130F09CA257E704ED357B2FF8BD7258CD038522CED38CB8F56754",
+      "bytes": 1411
+    },
+    {
+      "path": "local_presence_miner/ui/components/pricing_recommendation.py",
+      "sha256": "B4924177BC48BC8A4A72FC51178CCBA6BE46EB79933C7ABF2FE5A3AB20B6F505",
+      "bytes": 2746
+    },
+    {
+      "path": "local_presence_miner/ui/components/revenue_leak_card.py",
+      "sha256": "C1704BBF28FF03AD8B85ABB3004AAA9366834B90065C68D06FE5576B1E455F1E",
+      "bytes": 1215
+    },
+    {
+      "path": "local_presence_miner/ui/components/score_badge.py",
+      "sha256": "42D98ADA94A73A95228029AAB11D9452734E1783EF5EC0E48992AD5FB80669A4",
+      "bytes": 1609
+    },
+    {
+      "path": "local_presence_miner/ui/components/section_header.py",
+      "sha256": "B4797FB9318903308476B5267D5C1957B5F23195415072C554108AAA22275405",
+      "bytes": 1097
+    },
+    {
+      "path": "local_presence_miner/ui/components/status_badge.py",
+      "sha256": "6BE6A2B89B78252703B0C0D628CA800CF8DCC5E4C9A42E62672C4AA89968DD39",
+      "bytes": 1486
+    },
+    {
+      "path": "local_presence_miner/ui/components/toast.py",
+      "sha256": "4813C318E55FBD4A2ED2CEA2264261ED0856FE579137D875FE8B349A6E1B11F6",
+      "bytes": 711
+    },
+    {
+      "path": "local_presence_miner/ui/components/verification_progress.py",
+      "sha256": "9E08236F5B9FA0BE5B1BB5C1C88CADEB691185054F28C16CB3754F2F62615C4E",
+      "bytes": 1007
+    },
+    {
+      "path": "local_presence_miner/ui/dialogs/__init__.py",
+      "sha256": "01BA4719C80B6FE911B091A7C05124B64EEECE964E09C058EF8F9805DACA546B",
+      "bytes": 1
+    },
+    {
+      "path": "local_presence_miner/ui/dialogs/contact_interaction_dialog.py",
+      "sha256": "A306ABA585DAA11F5DB017FB790A2F347B87FA725127EECB649D9BAF72FFC222",
+      "bytes": 11651
+    },
+    {
+      "path": "local_presence_miner/ui/dialogs/guided_call_dialog.py",
+      "sha256": "F3AE2B669FE757833ABA952977E5DA7BD0F09EAAC3346BB6C993483602D52CE6",
+      "bytes": 17199
+    },
+    {
+      "path": "local_presence_miner/ui/dialogs/lead_detail_dialog.py",
+      "sha256": "E3C7CD92EE4B4B10054C7A191406400592B31B2B7634C0DA2ED96137D12E0BE1",
+      "bytes": 59101
+    },
+    {
+      "path": "local_presence_miner/ui/dialogs/new_search_dialog.py",
+      "sha256": "063422A6BE9C8B28BA53F33A98A1C829A2179BFFD39B16973F11EFAE757B5ADB",
+      "bytes": 8436
+    },
+    {
+      "path": "local_presence_miner/ui/dialogs/offer_history_dialog.py",
+      "sha256": "C830F5222EFA91BB52DF6CDAA6EACE9AC5F13559ADE82B609406A3DE584D3085",
+      "bytes": 7901
+    },
+    {
+      "path": "local_presence_miner/ui/dialogs/outreach_editor_dialog.py",
+      "sha256": "D5A7644967E8A583B0AB746B3E0E27393EFCE0DB2C875F4F1F78FFBC4EA841B3",
+      "bytes": 2069
+    },
+    {
+      "path": "local_presence_miner/ui/dialogs/seller_proof_dialog.py",
+      "sha256": "7B2844A27B758969EE95906CB846F07BC2465189C3BC00D0371C118258A6FEC0",
+      "bytes": 8154
+    },
+    {
+      "path": "local_presence_miner/ui/dialogs/settings_dialog.py",
+      "sha256": "DCAA530574050C5FAF51C0174FA8CC6A9C0163707D58C85062B35FABBEEA52E6",
+      "bytes": 3826
+    },
+    {
+      "path": "local_presence_miner/ui/icons.py",
+      "sha256": "B18778C7E872996C103E1A6B22C7C096A46B708370BA8BD6051C25E53982E7B7",
+      "bytes": 1191
+    },
+    {
+      "path": "local_presence_miner/ui/main_window.py",
+      "sha256": "634156169E24609BF91D5B5C3B0C23A6BA60E9CBC214A04E791CCD8995AB6D16",
+      "bytes": 24764
+    },
+    {
+      "path": "local_presence_miner/ui/theme.py",
+      "sha256": "6B9C406A82FEA6E3F631004DFD18C233527C8589F7EF5AE1D14C9F7F4B2E0A59",
+      "bytes": 10321
+    },
+    {
+      "path": "local_presence_miner/ui/widgets/__init__.py",
+      "sha256": "01BA4719C80B6FE911B091A7C05124B64EEECE964E09C058EF8F9805DACA546B",
+      "bytes": 1
+    },
+    {
+      "path": "local_presence_miner/ui/widgets/activity_log_widget.py",
+      "sha256": "BDBEF6C2A52A40C8B68B9897F16B64D13D7A971BAC71856AD38DEEB6C8F9C369",
+      "bytes": 896
+    },
+    {
+      "path": "local_presence_miner/ui/widgets/audit_widget.py",
+      "sha256": "5384BFDB2DF380B6557CC7A71D16891415BCCAA87699406E236F752C6415389F",
+      "bytes": 35
+    },
+    {
+      "path": "local_presence_miner/ui/widgets/competitor_widget.py",
+      "sha256": "5384BFDB2DF380B6557CC7A71D16891415BCCAA87699406E236F752C6415389F",
+      "bytes": 35
+    },
+    {
+      "path": "local_presence_miner/ui/widgets/dashboard_widget.py",
+      "sha256": "F8661A83ACC706C186B65F4862725E6B510E68ED1A46D6DFBF6EB3DFA257F4E0",
+      "bytes": 9197
+    },
+    {
+      "path": "local_presence_miner/ui/widgets/industry_intelligence_widget.py",
+      "sha256": "C581923743E20D812144A73433B5685A67CD561C87C3A8238349F81C0EEF0C1D",
+      "bytes": 7764
+    },
+    {
+      "path": "local_presence_miner/ui/widgets/lead_detail_widget.py",
+      "sha256": "E6692A1694763DB47FC87DA896B47FF1195900080A94B8199A139DF86F730F24",
+      "bytes": 217
+    },
+    {
+      "path": "local_presence_miner/ui/widgets/leads_table.py",
+      "sha256": "18331B73BF85B5537482C71CCEB75A705201A158FEFE3258C4CE631584F5C456",
+      "bytes": 8357
+    },
+    {
+      "path": "local_presence_miner/ui/widgets/outreach_widget.py",
+      "sha256": "716185EE9F2ACBF933E49CFE462328C9B01FF4138770087DDE1AC3A94703EA81",
+      "bytes": 10558
+    },
+    {
+      "path": "local_presence_miner/ui/widgets/pipeline_widget.py",
+      "sha256": "A8852C8CD9E0C463AAE2F95E132231CCE768CDED90E74162A976DEC9A0C58EDC",
+      "bytes": 8374
+    },
+    {
+      "path": "local_presence_miner/ui/widgets/pricing_widget.py",
+      "sha256": "2931FB8ACDF4C2595FCDACD3B3FDF35ABB0A6276A97BFCACC3312504C1E6DD0C",
+      "bytes": 28517
+    },
+    {
+      "path": "local_presence_miner/ui/widgets/prompt_paste_widget.py",
+      "sha256": "80AED5ED9E609093525CC62488F4E7953409E476C42B017D504DE5EF1EEE4CEF",
+      "bytes": 1136
+    },
+    {
+      "path": "local_presence_miner/ui/widgets/review_queue_widget.py",
+      "sha256": "FEF93B7463E5154B7E9F8C158A3A5B54EAA9A1E36DF66E5EFAC6B0D2829FD514",
+      "bytes": 7017
+    },
+    {
+      "path": "local_presence_miner/ui/widgets/run_history_widget.py",
+      "sha256": "647AB4F561F844BB91DF81E9B87480953980FE312A778A28CA33280E04B3196E",
+      "bytes": 1468
+    },
+    {
+      "path": "local_presence_miner/ui/widgets/setup_wizard_widget.py",
+      "sha256": "23782E82D5CB1BEE75854D83288016D3BB9D72E36FFCD284BDD3F331DD89A19F",
+      "bytes": 1835
+    },
+    {
+      "path": "local_presence_miner/ui/workers.py",
+      "sha256": "37969C979F10EDEA60115510EC9D7C0178CCACA4803946F2C9BC0B1B42959EE7",
+      "bytes": 712
+    },
+    {
+      "path": "packaging/windows/README.md",
+      "sha256": "D675EED722545A06D4B819F1018DE4A56729DD19C19B1850D5BD2910A8BA9540",
+      "bytes": 4843
+    },
+    {
+      "path": "packaging/windows/START_LOCAL_PRESENCE_MINER.bat",
+      "sha256": "EC2B9DF62C07AD10DA7B154FAA8DA56DBE08A806E479ECB88E5FF66DF8C976E3",
+      "bytes": 72
+    },
+    {
+      "path": "packaging/windows/TROUBLESHOOTING.txt",
+      "sha256": "D9ECD68BF75F2EFE9715757CC44110A3475368D1D889F81D62FC3746EB5D9F80",
+      "bytes": 1685
+    },
+    {
+      "path": "packaging/windows/version_info.txt",
+      "sha256": "EC8F27596D1436684FB902532EED180704A5822D453DE5279BE18E181DC8FF32",
+      "bytes": 781
+    },
+    {
+      "path": "pyproject.toml",
+      "sha256": "83BDF5F8C76B828A7BE8033A06D5A0B8F4317772B0FE0CE5DC6BE221F2AC566A",
+      "bytes": 994
+    },
+    {
+      "path": "requirements-dev.txt",
+      "sha256": "4410E19B46DF69F24AE1EC067EF989068172B73E2F0A04155F7A97AFA9511645",
+      "bytes": 78
+    },
+    {
+      "path": "requirements.txt",
+      "sha256": "295640E7A340DB0B4F6D692C65B29394E34C85909504DB8815F6B1CA7AE50095",
+      "bytes": 144
+    },
+    {
+      "path": "run_windows.ps1",
+      "sha256": "99F2126AEFF28141964C6A752EA972BDA701BDB875A115975422FB9C0C2C8B6E",
+      "bytes": 1027
+    },
+    {
+      "path": "sample_data/demo_businesses.json",
+      "sha256": "2D1CAD948143C1308346A084AA587DF46405A04466E874AD5E29A4F7C3C5A783",
+      "bytes": 2282
+    },
+    {
+      "path": "tests/test_adaptive_outreach_intelligence.py",
+      "sha256": "E6E0EBD9E6A3A17EA6D29770E3950C0B8B1E6C4ECE4BF92B086A6DD619135B95",
+      "bytes": 6644
+    },
+    {
+      "path": "tests/test_adaptive_outreach_ui.py",
+      "sha256": "D6A7545AC65B3A2768E8AC5399B1BBBCE0C3829DEAB386AD0080CC04E56AD1EF",
+      "bytes": 11403
+    },
+    {
+      "path": "tests/test_auditor.py",
+      "sha256": "4700B504330E660B8787C5DE500956A81B9A1D6BE0A8BF03419254275E79517C",
+      "bytes": 340
+    },
+    {
+      "path": "tests/test_builder_prompts.py",
+      "sha256": "8FB2EBD6F712DDBB31968F22EE26D30CCA4C8852EECC5CD24EFAA6524AEC6F70",
+      "bytes": 6143
+    },
+    {
+      "path": "tests/test_categories.py",
+      "sha256": "17251F775E3A2DB1D171F32AA256D29049D616406A4AC242A7FECC799A89EDA9",
+      "bytes": 395
+    },
+    {
+      "path": "tests/test_competitor_matching.py",
+      "sha256": "77CD834E956D14A41DE3D52BFCE805C4F9CA085FAE6E984CEFF46A3D1536F121",
+      "bytes": 1085
+    },
+    {
+      "path": "tests/test_config.py",
+      "sha256": "C9ED7B0AA84DEC62EA194F37412F3E505F7E15F006A4FA7F7AFEEFD34FF7B12C",
+      "bytes": 986
+    },
+    {
+      "path": "tests/test_contact_discovery.py",
+      "sha256": "99F3A42776FF7B8027FEA3D1B5015685C4E9B45F1D1A8E9D2071EF5EC38309F8",
+      "bytes": 6484
+    },
+    {
+      "path": "tests/test_database.py",
+      "sha256": "EADFF3581A9EDB52D754CAEA2F92C14F0086B2F132097FA4BC65C414A22C49F5",
+      "bytes": 5842
+    },
+    {
+      "path": "tests/test_exports.py",
+      "sha256": "AEE574E55745651D44F37DB34363C45476B522052E7E122E9388517DD0F4C1BA",
+      "bytes": 889
+    },
+    {
+      "path": "tests/test_google_presence_intelligence.py",
+      "sha256": "4251E082287854D60B1041F8F86817A20F4009995AF7423663777C86923ECE7B",
+      "bytes": 18865
+    },
+    {
+      "path": "tests/test_industry_intelligence.py",
+      "sha256": "6A7997FDAEC265C4C1FFBF8C6E9D6696963ED22A2740F188A8B4C2907BD326D6",
+      "bytes": 1432
+    },
+    {
+      "path": "tests/test_outreach.py",
+      "sha256": "1B6C8FE91234FB384CF18CE931E33DF251AAA79DD89C456413A5C58586AF2F32",
+      "bytes": 816
+    },
+    {
+      "path": "tests/test_outreach_engine.py",
+      "sha256": "F23B66204BA988B09F8AA77A17E274F0EFF5D5816F70BA77212D9684D3E3E020",
+      "bytes": 10161
+    },
+    {
+      "path": "tests/test_owner_brief.py",
+      "sha256": "49E1BA3D802AFB31650960E0E2F29ABD920BBAE9CD7187EF1A8CCEBD72A5EFD5",
+      "bytes": 1008
+    },
+    {
+      "path": "tests/test_pricing_calibration.py",
+      "sha256": "42DB38034AB234CAEEAADDB36549CCAA4EC5996850121A0B7CCBA9F9516BA87E",
+      "bytes": 889
+    },
+    {
+      "path": "tests/test_prompt_parser.py",
+      "sha256": "E46F7FFDBC0AF51B2BCAB0B367B5E7523D3EE069A0AEC06110C860478125EAA1",
+      "bytes": 763
+    },
+    {
+      "path": "tests/test_reports.py",
+      "sha256": "9E64EBA8477ED29547D7612375C45063FE9FDB29810B5304718ABDC0A8FEE3C8",
+      "bytes": 3558
+    },
+    {
+      "path": "tests/test_scoring.py",
+      "sha256": "C2D6852D0574F4D8303D4F236CEDCA6BE4D1BB96AC3504D836B51FDCF5E37E70",
+      "bytes": 1816
+    },
+    {
+      "path": "tests/test_suppression.py",
+      "sha256": "BFAFB6DD3B0D540BBA81B979864D379FE8EEE7DA7ADD01D535FC6726394022C3",
+      "bytes": 2338
+    },
+    {
+      "path": "tests/test_v0105_workflow.py",
+      "sha256": "0D297B7A0D1CC06F7044065238C39DA171A78AF6E816E638DEABD23043695DB2",
+      "bytes": 7212
+    },
+    {
+      "path": "tests/test_v0106_integrity.py",
+      "sha256": "5AAF88A008A6BB9C4FB59A07DB0D054119255880B55B2F80798F269C0E476255",
+      "bytes": 12163
+    },
+    {
+      "path": "tests/test_v0107_pricing.py",
+      "sha256": "EEF04670DDD68C47D4ED07269E2318DC890063CBE7E83C830C30465FB32C63E3",
+      "bytes": 20284
+    },
+    {
+      "path": "tests/test_v0109_qualification.py",
+      "sha256": "FF002BE4DFAEC8FF85DB82ACA78F087092050A0EB94F419DFB6BF4B26392F8A1",
+      "bytes": 7194
+    },
+    {
+      "path": "tests/test_v0110_sales_copilot.py",
+      "sha256": "8ACF6CE0006A1C2E71941B0F0CE5303516CA73B67E79CBCBE661D6AAD4EF3E37",
+      "bytes": 4405
+    },
+    {
+      "path": "tests/test_v0111_credibility_engine.py",
+      "sha256": "B3A1EA23760A5420385B23ED52FCAC23CE4E55733A095599DE9983A065D0FC9F",
+      "bytes": 19649
+    },
+    {
+      "path": "tests/test_v0111_forensic_fixes.py",
+      "sha256": "6B21409B8DFFEA1E5DD7062C4E13D3DC2954365EF2B44C105AA0FB2014FC4927",
+      "bytes": 9614
+    }
+  ]
+}

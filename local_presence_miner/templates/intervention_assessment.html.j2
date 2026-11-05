@@ -1,0 +1,54 @@
+{% set assessment = smart_offer.intervention_assessment %}
+{% if assessment %}
+<section>
+  <h2>Why this intervention, rather than another?</h2>
+  <p><strong>Decision:</strong> {{ assessment.state.replace('_', ' ') }} |
+    <strong>Recommendation confidence:</strong> {{ assessment.confidence }}</p>
+  <p>{{ assessment.summary }}</p>
+  {% if assessment.owner_fit_reason %}<p><strong>Owner fit:</strong> {{ assessment.owner_fit_status }} — {{ assessment.owner_fit_reason }}</p>{% endif %}
+  {% if sales_evidence and sales_evidence.selected_evidence %}
+  {% set proof = sales_evidence.selected_evidence %}
+  <h3>Selected service proof — {{ sales_evidence.review_state.replace('_', ' ').lower() }}</h3>
+  <p>{{ sales_evidence.plain_finding }}</p>
+  <p><strong>Owner question:</strong> {{ sales_evidence.owner_question }}</p>
+  <p><strong>Next step:</strong> {{ sales_evidence.next_step }}</p>
+  <details><summary>Inspect the selected source observation</summary>
+    <p><strong>Service:</strong> {{ proof.service }} | <strong>Query:</strong> {{ proof.query }} | <strong>Channel:</strong> {{ proof.channel }}</p>
+    <p><strong>Page:</strong> {{ proof.page_url or 'UNKNOWN' }} | <strong>Observed position:</strong> {{ proof.observed_position if proof.observed_position is not none else 'not found / unknown; see window' }} |
+      <strong>Result window {{ proof.result_window or 'UNKNOWN' }}:</strong> {{ 'complete' if proof.complete else 'incomplete' }} | <strong>Original observation:</strong> {{ proof.observed_at }}</p>
+    <p><strong>Actual source coverage:</strong> {{ proof.coverage_label }}</p>
+    <p><strong>Coverage method:</strong> {{ proof.source_coverage.method or 'UNKNOWN' }} |
+      <strong>Country / state:</strong> {{ proof.source_coverage.country or 'UNKNOWN' }} / {{ proof.source_coverage.state or 'UNKNOWN' }} |
+      <strong>Observed postal scope:</strong> {{ proof.source_coverage.postal_codes | join(', ') if proof.source_coverage.postal_codes else 'not measured' }} |
+      <strong>Circle radius:</strong> {{ proof.source_coverage.radius_miles if proof.source_coverage.radius_miles is not none else 'not measured' }} |
+      <strong>Coverage observation:</strong> {{ proof.source_coverage.observed_at or 'UNKNOWN' }}</p>
+    <p><strong>Reason:</strong> {{ proof.reason }} | <strong>Hypothesis:</strong> {{ proof.hypothesis }} | <strong>Confidence:</strong> {{ proof.confidence }}</p>
+    <p><strong>Competitive coverage:</strong> {{ proof.competitors | length }} supplied relevant observation(s); this is not an exhaustive market survey.</p>
+    {% for competitor in proof.competitors %}<p><strong>Observed competitor:</strong> {{ competitor.url }} — {{ competitor.channel }}, position {{ competitor.position }}, {{ competitor.kind }}.
+      Authority: {{ competitor.authority if competitor.authority is not none else 'UNKNOWN' }}; referring domains: {{ competitor.referring_domains if competitor.referring_domains is not none else 'UNKNOWN' }}.
+      This difference is correlation, not proof of lost customers or a ranking cause.</p>{% endfor %}
+    <p><strong>Falsifier:</strong> {{ proof.falsifier }}</p>
+    <ul>{% for item in proof.unknowns %}<li>{{ item }}</li>{% endfor %}</ul>
+    {% for observation in proof.observations %}<p>{{ observation.query }} — {{ observation.channel }}, position {{ observation.observed_position if observation.observed_position is not none else 'unknown / outside window' }}, window {{ observation.result_window }}, {{ 'complete' if observation.complete else 'incomplete' }}, {{ observation.observed_at }}.</p>{% endfor %}
+    {% if is_internal %}<p><strong>Source references:</strong> {{ proof.source_refs | join('; ') }}</p>{% endif %}
+  </details>
+  {% endif %}
+  {% if assessment.owner_validation_question %}<p><strong>Confirm before quoting:</strong> {{ assessment.owner_validation_question }}</p>{% endif %}
+  <p>Fit is a qualitative judgment about observed problems, not a measured opportunity score, expected return or guarantee.</p>
+  {% for candidate in assessment.ranked_candidates %}
+  <h3>{{ 'Selected supported scope' if candidate.offer_id == smart_offer.offer_id and candidate.scope == smart_offer.scope else 'Advisory alternative — not the selected paid scope' }} — {{ candidate.fit }} fit</h3>
+  <p><strong>Status:</strong> {{ candidate.status.replace('_', ' ') }}</p>
+  {% if is_internal %}<ul>{% for observation in candidate.observations %}<li>{{ observation }}</li>{% endfor %}</ul>{% endif %}
+  <p><strong>Problem hypothesis:</strong> {{ candidate.problem_hypothesis }}</p>
+  <p><strong>Why now:</strong> {{ candidate.why_now }}</p>
+  <p><strong>Why over alternatives:</strong> {{ candidate.why_over_alternatives }}</p>
+  <p><strong>Expected effect (hypothesis):</strong> {{ candidate.expected_effect }}</p>
+  <p><strong>What to measure:</strong> {{ candidate.success_metric }}</p>
+  <p><strong>What would disprove this:</strong> {{ candidate.falsifier }}</p>
+  <p><strong>Effort:</strong> {{ candidate.effort }}</p>
+  {% if is_internal %}<p><strong>Evidence references:</strong> {{ candidate.evidence_refs | join('; ') }}</p>{% endif %}
+  {% endfor %}
+  <h3>What we do not know</h3>
+  <ul>{% for item in assessment.unknowns %}<li>{{ item }}</li>{% endfor %}</ul>
+</section>
+{% endif %}

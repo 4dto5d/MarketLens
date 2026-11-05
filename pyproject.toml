@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "local-presence-miner"
+version = "0.1.16"
+description = "Windows desktop local-business lead generation and audit tool"
+requires-python = ">=3.11"
+dependencies = [
+  "beautifulsoup4>=4.12.3",
+  "jinja2>=3.1.4",
+  "playwright>=1.45.0",
+  "pydantic>=2.7.0",
+  "PySide6==6.7.3",
+  "python-dotenv>=1.0.1",
+  "requests>=2.31.0",
+  "SQLAlchemy>=2.0.30",
+]
+
+[project.scripts]
+local-presence-miner = "app:main"
+lpm-cli = "local_presence_miner.cli:main"
+
+[tool.setuptools]
+py-modules = ["app"]
+
+[tool.setuptools.packages.find]
+include = ["local_presence_miner*"]
+
+[tool.setuptools.package-data]
+local_presence_miner = ["assets/postal_geo_census2020_v1.zip"]
+
+[tool.ruff]
+line-length = 160
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_unused_ignores = true
+warn_return_any = true
+check_untyped_defs = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

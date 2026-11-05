@@ -1,0 +1,23 @@
+{% if delivery_packet %}
+<section>
+  <h2>{{ delivery_packet.business_name }} — exact-scope delivery checklist</h2>
+  <p><strong>Readiness:</strong> {{ delivery_packet.warning }}</p>
+  <p><strong>Selected price:</strong> {% if delivery_packet.selected_price %}${{ "{:,}".format(delivery_packet.selected_price) }}{% else %}UNKNOWN — agree an actual amount{% endif %}</p>
+  <p>This manual operating packet records customer facts. Generic concepts are optional demonstrations and do not authorize live changes.</p>
+  <ul>{% for item in delivery_packet.scope %}<li>{{ item }}</li>{% endfor %}</ul>
+  <h3>Implementation brief for the selected scope</h3>
+  <p>{{ delivery_packet.implementation_brief }}</p>
+  <table><tr><th>Required customer fact / decision</th><th>Recorded fact or discovery task</th></tr>
+    {% for item in delivery_packet.fields %}<tr><td>{{ item.label }}</td><td>{{ item.value }}</td></tr>{% endfor %}
+  </table>
+  <h3>Scope-specific delivery prerequisites</h3>
+  <table><tr><th>Prerequisite</th><th>Decision</th><th>Evidence / scope-specific explanation</th></tr>
+    {% for item in delivery_packet.prerequisites %}<tr><td>{{ item.label }}</td><td>{{ item.state.replace('_', ' ') }}</td><td>{{ item.notes or 'UNKNOWN — review required' }}</td></tr>{% endfor %}
+  </table>
+  <p><strong>Human review:</strong> {{ delivery_packet.reviewer or 'Required — no current reviewed packet' }}{% if delivery_packet.reviewed_at %} at {{ delivery_packet.reviewed_at }}{% endif %}.
+    <strong>Owner agreement recorded:</strong> {{ 'yes' if delivery_packet.owner_approved else 'no' }}.
+    <strong>Selected evidence reviewed:</strong> {{ 'yes' if delivery_packet.evidence_reviewed else 'review required' }}.</p>
+  {% if delivery_packet.source_text %}<p><strong>Review notes:</strong> {{ delivery_packet.source_text }}</p>{% endif %}
+  <p>Technical unknowns require Sammi / existing-provider discovery. Recovery has the limits recorded above; no universal rollback or no-risk guarantee is made. No payment provider, deposit percentage or legal terms are supplied by this template.</p>
+</section>
+{% endif %}

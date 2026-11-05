@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ lead.name }} Competitor Comparison</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; color: #172033; background: #f5f7fb; }
+    main { max-width: 1160px; margin: 0 auto; padding: 28px; }
+    section { background: white; border: 1px solid #dbe3ef; border-radius: 8px; padding: 22px; margin: 16px 0; }
+    h1, h2, h3 { margin-top: 0; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; border-bottom: 1px solid #e8edf5; padding: 9px; vertical-align: top; }
+    .target { border-left: 5px solid #2457a6; }
+    .score { font-weight: 800; font-size: 24px; }
+    .muted { color: #5e6b7d; }
+    pre { white-space: pre-wrap; background: #101827; color: #f8fbff; padding: 14px; border-radius: 8px; }
+    @media print { body { background: white; } section { break-inside: avoid; } }
+  </style>
+</head>
+<body>
+<main>
+  <section class="target">
+    <h1>{{ lead.name }} Competitor Comparison</h1>
+    <p><strong>Purpose:</strong> help decide how the target website and Google presence could match or beat the local competitor average without copying competitors.</p>
+    <p class="muted">Scores are deterministic quick-audit estimates. Human review is still required for design quality, profile ownership, collected-result context, and final sales claims.</p>
+    {% if prompt_path %}<p><strong>AI analysis prompt saved:</strong> {{ prompt_path }}</p>{% endif %}
+    {% if builder_prompt_paths %}
+    <p><strong>AI website-builder prompts:</strong></p>
+    <ul>
+      {% for platform, path in builder_prompt_paths.items() %}
+      <li>{{ platform|title }}: {{ path }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </section>
+
+  <section>
+    <h2>Score Table</h2>
+    <table>
+      <tr>
+        <th>Business</th>
+        <th>Role</th>
+        <th>Overall</th>
+        <th>Completeness</th>
+        <th>UI</th>
+        <th>Presentation Readiness</th>
+        <th>Interaction</th>
+        <th>Efficiency</th>
+      </tr>
+      {% for row in rows %}
+      <tr>
+        <td><strong>{{ row.name }}</strong><br>{{ row.website or "No website listed" }}</td>
+        <td>{{ row.role }}</td>
+        <td class="score">{{ row.overall if row.overall is not none else 'Unknown' }}</td>
+        <td>{{ row.completeness if row.completeness is not none else 'Unknown' }}</td>
+        <td>{{ row.ui_friendliness if row.ui_friendliness is not none else 'Unknown' }}</td>
+        <td>{{ row.presentation_readiness if row.presentation_readiness is not none else 'Unknown' }}</td>
+        <td>{{ row.customer_interaction if row.customer_interaction is not none else 'Unknown' }}</td>
+        <td>{{ row.efficiency if row.efficiency is not none else 'Unknown' }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  </section>
+
+  {% for row in rows %}
+  <section>
+    <h2>{{ row.name }}</h2>
+    <p><strong>{{ row.role }}</strong> | Overall {{ (row.overall|string ~ '/100') if row.overall is not none else 'Unknown (not audited)' }}</p>
+    <h3>What Works</h3>
+    <ul>{% for item in row.strengths %}<li>{{ item }}</li>{% endfor %}</ul>
+    <h3>Weaknesses</h3>
+    <ul>{% for item in row.weaknesses %}<li>{{ item }}</li>{% endfor %}</ul>
+    <h3>What A Good {{ lead.category }} Website Should Do</h3>
+    <ul>{% for item in row.what_makes_good %}<li>{{ item }}</li>{% endfor %}</ul>
+  </section>
+  {% endfor %}
+
+  <section>
+    <h2>Paste-Ready AI Prompt</h2>
+    <p class="muted">Use this with ChatGPT Plus if you want deeper written analysis. Keep the output as a draft and verify claims manually.</p>
+    <pre>{{ prompt }}</pre>
+  </section>
+</main>
+</body>
+</html>

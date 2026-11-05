@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ lead.name }} Concept</title>
+  <style>
+    body { margin:0; font-family: Arial, sans-serif; color:#172033; background:#eef3f8; }
+    header, section { max-width:1100px; margin:0 auto; padding:28px; }
+    header { background:white; border-bottom:1px solid #d9e1ed; }
+    .hero { background:#17324d; color:white; padding:42px; border-radius:8px; }
+    .hero p { color:#dce7f4; }
+    .btn { display:inline-block; background:#f6c453; color:#172033; padding:13px 18px; border-radius:6px; text-decoration:none; font-weight:700; margin-right:10px; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px; }
+    .card { background:white; border:1px solid #d9e1ed; border-radius:8px; padding:18px; }
+  </style>
+</head>
+<body>
+<header>
+  <strong>{{ lead.name }}</strong>
+  <p>Generated proposal concept. Not a live website and not affiliated with the business.</p>
+</header>
+<section>
+  <div class="hero">
+    <h1>Fast, local {{ lead.category }} help without guessing who to call.</h1>
+    <p>Clear phone, quote path, service details, trust proof, and local profile alignment for customers ready to act.</p>
+    <a class="btn" href="tel:{{ lead.phone }}">Call {{ lead.phone or "Today" }}</a>
+    <a class="btn" href="#quote">Request a Quote</a>
+  </div>
+</section>
+<section>
+  <h2>Services</h2>
+  <div class="grid">
+    {% for service in services %}
+    <div class="card"><h3>{{ service }}</h3><p>Short, specific copy that tells visitors what to expect and how to get help.</p></div>
+    {% endfor %}
+  </div>
+</section>
+<section class="grid">
+  <div class="card">
+    <h2>Trust Proof</h2>
+    <p>Review highlights, recent job photos, licenses, guarantees, and owner/team photos belong here.</p>
+  </div>
+  <div class="card">
+    <h2>Google Presence Fixes</h2>
+    <ul>{% for signal in target_signals %}<li>{{ signal }}</li>{% endfor %}</ul>
+  </div>
+</section>
+<section id="quote" class="card">
+  <h2>Request a Quote</h2>
+  <p>Suggested fields: name, phone, ZIP code, service needed, urgency, photos, preferred callback time.</p>
+</section>
+</body>
+</html>

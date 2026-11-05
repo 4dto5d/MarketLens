@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ lead.name }} Local Presence Proposal</title>
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; color: #172033; background: #f6f8fb; }
+    main { max-width: 980px; margin: 0 auto; padding: 28px; }
+    section { background: white; border: 1px solid #dbe3ef; border-radius: 8px; padding: 22px; margin: 16px 0; }
+    h1, h2 { margin-top: 0; }
+    .price { font-size: 30px; font-weight: 800; }
+    .badge { display: inline-block; padding: 4px 8px; border-radius: 99px; background: #e9eef8; margin: 3px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; border-bottom: 1px solid #e8edf5; padding: 9px; vertical-align: top; }
+    @media print { body { background: white; } section { break-inside: avoid; } }
+  </style>
+</head>
+<body>
+<main>
+  <section>
+    <h1>{{ lead.name }} Local Presence Proposal</h1>
+    <p>This proposal is based on a Business Opportunity Analysis of public website and Google-facing observations. Final claims, profile ownership, and business details must be manually verified.</p>
+    {% for signal in target_signals %}<span class="badge">{{ signal }}</span>{% endfor %}
+  </section>
+
+  <section>
+    <h2>Problem Summary</h2>
+    <p>{{ smart_offer.positioning }}</p>
+    <ul>
+      {% if is_internal %}{% for factor in score_factors[:5] %}<li>Legacy triage: {{ factor.label }}: {{ factor.evidence }}</li>{% endfor %}{% endif %}
+    </ul>
+  </section>
+
+  <section>
+    <h2>Recommended Package</h2>
+    <p><strong>Offer type:</strong> {{ smart_offer.offer_type }}</p>
+    <p><strong>{{ smart_offer.offer_name }}</strong></p>
+    {% if selected_price %}<p class="price">${{ "{:,}".format(selected_price) }}</p>
+    {% else %}<p><strong>Pricing:</strong> {{ 'No paid recommendation' if not smart_offer.scope else 'Requires final scope review.' }}</p>{% endif %}
+    <ul>{% for item in smart_offer.scope %}<li>{{ item }}</li>{% endfor %}</ul>
+  </section>
+  {% include 'intervention_assessment.html.j2' %}
+  {% include 'delivery_packet.html.j2' %}
+
+  <section>
+    <h2>Why This Recommendation Is Grounded</h2>
+    <ul>
+      <li>Website and Google-facing observations are limited to stored public evidence and require final human review.</li>
+      {% if competitors_verified %}<li>The comparison set was manually reviewed before competitor language was used.</li>{% endif %}
+      {% for item in credibility_points %}<li>Relevant verified seller proof: {{ item }}</li>{% endfor %}
+    </ul>
+  </section>
+
+  {% if google_presence and is_internal %}
+  <section>
+    <h2>Google Presence Evidence</h2>
+    <p><strong>Strength:</strong> {{ google_presence.strength_score }}/100 |
+      <strong>Opportunity:</strong> {{ google_presence.opportunity_score }}/100 |
+      <strong>Confidence:</strong> {{ google_presence.confidence }}</p>
+    <p>{{ google_presence.top_issue }}</p>
+    <ul>{% for item in google_presence.competitor_summary %}<li>{{ item }}</li>{% endfor %}</ul>
+    <p><strong>Evidence-backed action:</strong> {{ google_presence.recommended_action }}</p>
+  </section>
+  {% endif %}
+
+  {% if is_internal %}
+  <section>
+    <h2>Private Seller Pricing Intelligence — Do Not Send To Prospect</h2>
+    <p><strong>Catalog service-cost band (not ROI):</strong> {{ pricing.project.range_text }}</p>
+    <p><strong>Easy-close:</strong> {{ pricing.easy_close_text }} |
+      <strong>Recommended:</strong> {{ pricing.recommended_text }} |
+      <strong>Stretch:</strong> {{ pricing.stretch_text }}</p>
+    <p><strong>Evidence confidence:</strong> {{ pricing.confidence }} |
+      <strong>Comparable sample:</strong> {{ pricing.comparable.sample_count }}</p>
+    <h3>Seller proof summary</h3>
+    <ul>
+      <li>Completed paid projects: {{ pricing.proof.completed_paid_projects }}</li>
+      <li>Relevant niche proof: {{ pricing.proof.relevant_niche_projects }}</li>
+      <li>Testimonials: {{ pricing.proof.testimonials }}</li>
+      <li>Comparable won jobs: {{ pricing.proof.comparable_won_jobs }}</li>
+      <li>Recent pricing trend: {{ pricing.proof.recent_pricing_trend }}</li>
+    </ul>
+    <h3>Comparable history</h3>
+    {% if pricing.comparable.offers %}
+    <table>
+      <tr><th>Business</th><th>Ask</th><th>Outcome</th><th>Similarity</th></tr>
+      {% for item in pricing.comparable.offers %}
+      <tr>
+        <td>{{ item.offer.business_name }}</td>
+        <td>${{ "{:,}".format(item.offer.initial_ask) }}</td>
+        <td>{{ item.offer.status }}{% if item.offer.closed_amount %} at ${{ "{:,}".format(item.offer.closed_amount) }}{% endif %}</td>
+        <td>{{ ", ".join(item.reasons) }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% else %}<p>No comparable historical offers are recorded.</p>{% endif %}
+    <h3>Why this number?</h3>
+    <ul>{% for reason in pricing.reasoning %}<li>{{ reason }}</li>{% endfor %}</ul>
+    <h3>Phased options</h3>
+    <ul>{% for phase in pricing.phases %}<li><strong>{{ phase.name }} — ${{ "{:,}".format(phase.amount) }}</strong>: {{ phase.scope }}</li>{% endfor %}</ul>
+  </section>
+  {% endif %}
+
+  <section>
+    <h2>Timeline</h2>
+    <table>
+      <tr><th>Phase</th><th>Deliverable</th><th>Typical timing</th></tr>
+      <tr><td>1</td><td>Validate the observed need, owner goal, access and baseline.</td><td>Agree with the owner</td></tr>
+      {% if smart_offer.scope %}<tr><td>2</td><td>Confirm the exact supported scope, effort and measurement plan before implementation.</td><td>Unknown until scoped</td></tr>{% endif %}
+    </table>
+  </section>
+
+  <section>
+    <h2>Competitor Gap</h2>
+    <table>
+      <tr><th>Competitor</th><th>Evidence</th></tr>
+      {% for competitor in competitors %}
+      <tr><td>{{ competitor.competitor_name }}</td><td>{{ competitor.reason }}</td></tr>
+      {% endfor %}
+    </table>
+  </section>
+
+  <section>
+    <h2>Not Promised</h2>
+    <ul>
+      <li>No ranking, revenue, lead volume, or review-count guarantee.</li>
+      <li>No fake reviews, paid reviews, review disguising, or competitor content copying.</li>
+      <li>No claim that the Google profile is unclaimed unless ownership is manually verified.</li>
+      <li>Any recorded Maps position is limited to its stated query, source, place and observation window; no universal ranking or private profile access is claimed.</li>
+    </ul>
+  </section>
+
+  {% if is_internal %}<section>
+    <h2>Optional Add-Ons And Pricing Menu</h2>
+    <table>
+      <tr><th>Package</th><th>Range</th><th>Best For</th></tr>
+      {% for tier in service_tiers %}
+      <tr>
+        <td><strong>{{ tier.name }}</strong><br>{{ "; ".join(tier.deliverables[:3]) }}</td>
+        <td>{{ tier.price_range }}</td>
+        <td>{{ tier.best_for }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+    <p><strong>Chat/AI note:</strong> A chat bubble can be sold as a human-managed lead capture add-on, or as a real AI answer assistant at a higher setup/monthly price because it needs approved source docs, provider costs, handoff rules, and monitoring.</p>
+  </section>
+  {% endif %}
+</main>
+</body>
+</html>

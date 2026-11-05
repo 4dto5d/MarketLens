@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ lead.name }} Business Opportunity Analysis</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; color: #172033; background: #f5f7fb; }
+    main { max-width: 1060px; margin: 0 auto; padding: 28px; }
+    section { background: white; border: 1px solid #dbe3ef; border-radius: 8px; padding: 22px; margin: 16px 0; }
+    h1, h2 { margin-top: 0; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; border-bottom: 1px solid #e8edf5; padding: 9px; vertical-align: top; }
+    .badge { display: inline-block; padding: 4px 8px; border-radius: 99px; background: #e9eef8; margin: 3px; }
+    .score { font-size: 42px; font-weight: 800; }
+    pre { white-space: pre-wrap; background: #101827; color: #f8fbff; padding: 14px; border-radius: 8px; }
+    .audit-screenshot { display: block; max-width: 100%; height: auto; border: 1px solid #dbe3ef; border-radius: 6px; margin: 10px 0 20px; }
+    @media print { body { background: white; } section { break-inside: avoid; } }
+  </style>
+</head>
+<body>
+<main>
+  <section>
+    <h1>{{ lead.name }}</h1>
+    <p><strong>Report type:</strong> {{ report_kind.replace("_", " ") }}</p>
+    <p><strong>Category:</strong> {{ lead.category }} | <strong>Phone:</strong> {{ lead.phone or "Not found" }}</p>
+    <p><strong>Website:</strong> {{ lead.website or ("No website listed" if google_details_retrieved else "Unknown — rich Google details were not retrieved") }}<br>
+    <strong>Google:</strong> {{ lead.google_maps_url or "Not captured" }}<br>
+    <strong>Yelp/other:</strong> {{ lead.yelp_url or "Not captured" }}</p>
+    <p><strong>Manual verification note:</strong> Do not claim this profile is unclaimed unless ownership status is manually verified.</p>
+  </section>
+
+  {% if is_internal %}<section>
+    <h2>Legacy triage score — not commercial value</h2>
+    <div class="score">{{ lead.lead_score }}/100</div>
+    <p><strong>Triage only</strong> | <strong>Priority:</strong> {{ lead.priority }}. This score does not select the paid intervention or set its price.</p>
+    <h3>Legacy signals — require source validation</h3>
+    {% for signal in target_signals %}<span class="badge">{{ signal }}</span>{% endfor %}
+  </section>{% endif %}
+
+  {% if is_internal %}
+  <section>
+    <h2>Growth Score Breakdown</h2>
+    <table>
+      <tr><th>Factor</th><th>Points</th><th>Evidence</th></tr>
+      {% for factor in score_factors %}
+      <tr><td>{{ factor.label }}</td><td>{{ factor.points }}</td><td>{{ factor.evidence }}</td></tr>
+      {% endfor %}
+    </table>
+  </section>
+  {% endif %}
+
+  <section>
+    <h2>Smart Offer</h2>
+    <p><strong>Offer type:</strong> {{ smart_offer.offer_type }}</p>
+    <p><strong>{{ smart_offer.offer_name }}</strong></p>
+    <p>{{ smart_offer.positioning }}</p>
+    <p><strong>Primary outcome:</strong> {{ smart_offer.primary_outcome }}</p>
+    <ul>{% for item in smart_offer.scope %}<li>{{ item }}</li>{% endfor %}</ul>
+    <p><strong>First step:</strong> {{ smart_offer.first_step }}</p>
+    <p><strong>Boundary:</strong> {{ smart_offer.boundary }}</p>
+  </section>
+  {% include 'intervention_assessment.html.j2' %}
+
+  <section>
+    <h2>Why This Recommendation Is Grounded</h2>
+    <ul>
+      <li>The recommendation uses stored public observations. Final human review: {{ final_review_state.replace('_', ' ').lower() }}. A recorded review does not establish owner approval.</li>
+      {% if competitors_verified %}<li>The comparison set was manually reviewed before competitor wording was used.</li>{% endif %}
+      {% for item in credibility_points %}<li>Relevant verified seller proof: {{ item }}</li>{% endfor %}
+    </ul>
+  </section>
+
+  {% if google_presence and is_internal %}
+  <section>
+    <h2>Google Presence</h2>
+    <p><strong>Current Strength:</strong> {{ google_presence.strength_score }}/100 |
+      <strong>Improvement Opportunity:</strong> {{ google_presence.opportunity_score }}/100 |
+      <strong>Evidence Confidence:</strong> {{ google_presence.confidence }}</p>
+    <p><strong>Top issue:</strong> {{ google_presence.top_issue }}</p>
+    <h3>Strengths</h3>
+    <ul>{% for item in google_presence.observed_strengths %}<li>{{ item }}</li>{% endfor %}</ul>
+    <h3>Opportunities</h3>
+    <ul>{% for item in google_presence.observed_gaps %}<li>{{ item }}</li>{% endfor %}</ul>
+    <h3>Competitor Context</h3>
+    <ul>{% for item in google_presence.competitor_summary %}<li>{{ item }}</li>{% endfor %}</ul>
+    <p><strong>Recommended action:</strong> {{ google_presence.recommended_action }}</p>
+    {% if is_internal %}
+    <h3>Unknowns</h3>
+    <ul>{% for item in google_presence.unknowns %}<li>{{ item }}</li>{% endfor %}</ul>
+    <h3>Provenance</h3>
+    <ul>{% for item in google_presence.provenance %}<li>{{ item.human_readable }} ({{ item.provider }}, Place ID {{ item.place_id or "n/a" }}, {{ "derived" if item.derived else "source-backed" }})</li>{% endfor %}</ul>
+    {% endif %}
+  </section>
+  {% endif %}
+
+  <section>
+    <h2>Business Opportunity Analysis</h2>
+    <p><strong>Evidence sources:</strong> Raw HTML: {{ raw_html_status }} | PageSpeed: {{ audit.pagespeed_status }} | Rendered browser: {{ audit.rendered_status }}</p>
+    <p><strong>Raw acquisition observation time:</strong> {{ raw_html_observed_at }}. Completion records acquisition, not fact review or owner approval.</p>
+    <p><strong>Reachable:</strong> {{ audit.reachable }} | <strong>Status:</strong> {{ audit.status_code or "" }} | <strong>Final URL:</strong> {{ audit.final_url }}</p>
+    <h3>Weaknesses</h3>
+    <ul>{% for item in audit.weaknesses %}<li>{{ item }}</li>{% endfor %}</ul>
+    <h3>Strengths</h3>
+    <ul>{% for item in audit.strengths %}<li>{{ item }}</li>{% endfor %}</ul>
+    {% if audit.rendered_checks %}
+    <h3>Rendered Browser Checks</h3>
+    <table>
+      <tr><th>Check</th><th>Result</th><th>Rendered evidence</th></tr>
+      {% for key, value in audit.rendered_checks.items() %}
+      <tr>
+        <td>{{ key.replace("_", " ") }}</td>
+        <td>{{ "Detected" if value else "Not detected" }}</td>
+        <td>{{ audit.evidence.get("rendered_" ~ key, "Rendered browser check") }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% endif %}
+    {% if is_internal and desktop_screenshot_uri %}
+    <h3>Desktop Evidence Screenshot</h3>
+    <img class="audit-screenshot" src="{{ desktop_screenshot_uri }}" alt="Desktop rendered-audit screenshot for {{ lead.name }}">
+    {% endif %}
+    {% if is_internal and mobile_screenshot_uri %}
+    <h3>Mobile Evidence Screenshot</h3>
+    <img class="audit-screenshot" src="{{ mobile_screenshot_uri }}" alt="Mobile rendered-audit screenshot for {{ lead.name }}">
+    {% endif %}
+  </section>
+
+  {% if not is_owner_short %}
+  <section>
+    <h2>Competitors</h2>
+    <table>
+      <tr><th>Name</th><th>Match Score</th><th>Reason</th></tr>
+      {% for competitor in competitors %}
+      <tr><td>{{ competitor.competitor_name }}</td><td>{{ competitor.match_score }}</td><td>{{ competitor.reason }}</td></tr>
+      {% endfor %}
+    </table>
+  </section>
+  {% endif %}
+
+  {% if is_internal %}
+  <section>
+    <h2>Outreach Drafts</h2>
+    {% for draft in drafts %}
+    <h3>{{ draft.kind }}</h3>
+    {% if draft_warnings.get(draft.id) %}<p><strong>Historical draft — review required:</strong> {{ draft_warnings[draft.id] | join(' ') }}</p>{% endif %}
+    {% if draft.subject %}<p><strong>Subject:</strong> {{ draft.subject }}</p>{% endif %}
+    <pre>{{ draft.body }}</pre>
+    {% endfor %}
+  </section>
+  {% endif %}
+
+  {% if is_internal %}
+  <section>
+    <h2>Query-scoped SEO research — not a commercial offer</h2>
+    <p>{{ seo_research.state }}: {{ seo_research.summary }}</p>
+    <p>Operator-recorded source evidence. Organic, Maps and Places coverage are distinct. Country volume is not local demand. No ranking, conversion or ROI guarantee.</p>
+    {% for item in seo_research.opportunities %}
+    <h3>{{ item.service }} — {{ item.action }} ({{ item.decision }})</h3>
+    <p>{{ item.queries | join('; ') }} — Organic: {{ item.organic_visibility }}; Maps: {{ item.maps_visibility }}; capturability: {{ item.capturability }}</p>
+    <p>{{ item.reason }}</p><p>Confidence: {{ item.confidence }}. Expected measurable effect: {{ item.expected_effect }}</p>
+    <p>Success measure: {{ item.success_metric }}. Falsifier: {{ item.falsifier }}</p>
+    <ul>{% for ref in item.evidence_refs %}<li>{{ ref }}</li>{% endfor %}</ul>
+    {% endfor %}
+    <ul>{% for item in seo_research.unknowns %}<li>{{ item }}</li>{% endfor %}</ul>
+  </section>
+  {% endif %}
+
+  <section>
+    <h2>Disclaimers</h2>
+    <ul>
+      <li>This report uses public observations and quick technical checks only.</li>
+      <li>Profile ownership, ranking causes, and revenue impact require manual verification.</li>
+      <li>No ranking, lead volume, or revenue guarantee is made.</li>
+      <li>Places result order is not represented as an exact Google Maps ranking.</li>
+    </ul>
+  </section>
+</main>
+</body>
+</html>
