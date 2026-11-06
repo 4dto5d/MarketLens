@@ -1,4 +1,10 @@
-"""Registry v5 catalog pricing and the seller walk-away floor (F1-F2)."""
+"""Registry v5 catalog pricing and the internal minimum-earnings check (F1-F2).
+
+Clients are always quoted a flat price. The minimum hourly earnings is an
+internal check; by default MarketLens keeps the catalog flat price and warns
+when it pays under the minimum, and only raises the quote when the
+"raise quotes to minimum" setting is on.
+"""
 
 from __future__ import annotations
 
@@ -7,7 +13,7 @@ import zipfile
 
 import pytest
 
-from local_presence_miner.config import AppConfig, operator_hourly_rate
+from local_presence_miner.config import AppConfig, minimum_hourly_earnings, raise_quotes_to_minimum
 from local_presence_miner.database.engine import create_session_factory
 from local_presence_miner.database.migrations import initialize_database
 from local_presence_miner.database.pricing_repository import save_seller_proof
@@ -21,7 +27,7 @@ from local_presence_miner.domain.offer_registry import (
     offer_definition,
     resolve_offer,
 )
-from local_presence_miner.domain.seller_economics import pricing_stage, walk_away
+from local_presence_miner.domain.seller_economics import minimum_price, pricing_stage
 from local_presence_miner.services.lead_package_service import LeadPackageService
 from local_presence_miner.services.proposal_service import ProposalService
 from local_presence_miner.services.seller_pricing_service import SellerPricingService
@@ -91,56 +97,69 @@ def test_pricing_stage_thresholds(projects: int, stage: int) -> None:
     assert pricing_stage(projects) == stage
 
 
-def test_walk_away_matches_the_catalog_method() -> None:
+def test_minimum_price_matches_the_catalog_method() -> None:
     site = offer_definition("five_page_service_site")
-    cold = walk_away(site, rate=35, stage=1)
+    cold = minimum_price(site, rate=35, stage=1)
     assert cold is not None
     # 30 h x 1.35 + 27 cold acquisition + 6 setup + 10 sample = 83.5 h; cash 90 + 80 + 60 + 40 = 270.
     assert (cold.hours, cold.cash, cold.amount, cold.route) == (83.5, 270, 3_300, "cold")
-    assert walk_away(site, rate=45, stage=1).amount == 4_150
-    warm = walk_away(site, rate=35, stage=1, route="warm")
+    assert round(cold.effective_hourly(3_400)) == 36
+    assert minimum_price(site, rate=45, stage=1).amount == 4_150
+    warm = minimum_price(site, rate=35, stage=1, route="warm")
     assert warm.amount < cold.amount
-    # Stage 2 reuses setup and the sample, so the floor drops.
-    assert walk_away(site, rate=35, stage=2).amount < cold.amount
+    # Stage 2 reuses setup and the sample, so the minimum drops.
+    assert minimum_price(site, rate=35, stage=2).amount < cold.amount
     # Monthly care has no acquisition or setup inside the monthly fee.
-    assert walk_away(offer_definition("website_care_plan"), rate=35).amount == 150
+    assert minimum_price(offer_definition("website_care_plan"), rate=35).amount == 150
 
 
-def test_first_time_seller_gets_the_catalog_quote_not_a_discount(tmp_path) -> None:
+def test_first_time_seller_gets_the_flat_catalog_quote_not_a_discount(tmp_path) -> None:
     factory = _factory(tmp_path, "first-time")
     with factory() as session:
         lead = _lead(session, "Five-Page Service Site + Booking Route")
-        pricing = SellerPricingService(operator_rate=35).recommend_for_lead(session, lead)
+        pricing = SellerPricingService(minimum_hourly_earnings=35).recommend_for_lead(session, lead)
         assert pricing.pricing_stage == 1
         assert pricing.recommended == 3_400
-        assert pricing.walk_away == 3_300
-        assert pricing.easy_close == 3_300  # one $500 step down is clamped to the walk-away
+        assert pricing.minimum_price == 3_300
+        assert pricing.easy_close == 3_300  # one $500 step down is held at the minimum
         assert pricing.stretch == 3_900  # the stage-2 quote
-        assert not pricing.warnings
-        assert any("Internal walk-away" in line for line in pricing.reasoning)
+        assert not pricing.below_minimum and not pricing.warnings
+        assert any("Minimum-earnings check" in line for line in pricing.reasoning)
 
 
-def test_floor_above_quote_raises_the_ask_and_warns(tmp_path) -> None:
-    factory = _factory(tmp_path, "floor")
+def test_default_keeps_the_flat_price_and_warns_when_below_minimum(tmp_path) -> None:
+    factory = _factory(tmp_path, "warn")
     with factory() as session:
         lead = _lead(session, "Technical SEO Repair", place_id="tech-repair")
-        pricing = SellerPricingService(operator_rate=35).recommend_for_lead(session, lead)
-        # Cold technical repair: walk-away 2,150 exceeds the 2,050 stage-1 quote.
-        assert pricing.walk_away == 2_150
+        pricing = SellerPricingService(minimum_hourly_earnings=35, raise_to_minimum=False).recommend_for_lead(session, lead)
+        # Cold technical repair: the $2,050 flat quote pays under $35/h (needs $2,150).
+        assert pricing.minimum_price == 2_150
+        assert pricing.recommended == 2_050
+        assert pricing.easy_close == 2_050  # no lower ask below the minimum
+        assert pricing.below_minimum and not pricing.raised_to_minimum
+        assert pricing.warnings and pricing.warnings[0].startswith("Below your minimum")
+
+
+def test_raise_setting_lifts_the_flat_price_to_the_minimum(tmp_path) -> None:
+    factory = _factory(tmp_path, "raise")
+    with factory() as session:
+        lead = _lead(session, "Technical SEO Repair", place_id="tech-raise")
+        pricing = SellerPricingService(minimum_hourly_earnings=35, raise_to_minimum=True).recommend_for_lead(session, lead)
         assert pricing.recommended == 2_150
         assert pricing.easy_close == 2_150
-        assert pricing.warnings and "warmer route" in pricing.warnings[0]
+        assert pricing.below_minimum and pricing.raised_to_minimum
+        assert "raised to $2,150" in pricing.warnings[0]
 
 
-def test_higher_operator_rate_raises_the_floor(tmp_path) -> None:
+def test_higher_minimum_warns_without_changing_the_flat_price(tmp_path) -> None:
     factory = _factory(tmp_path, "rate")
     with factory() as session:
         lead = _lead(session, "Five-Page Service Site + Booking Route", place_id="rate-lead")
-        at_60 = SellerPricingService(operator_rate=60).recommend_for_lead(session, lead)
-        assert at_60.operator_rate == 60
-        assert at_60.walk_away == 5_450
-        assert at_60.recommended == 5_450
-        assert at_60.warnings
+        at_60 = SellerPricingService(minimum_hourly_earnings=60, raise_to_minimum=False).recommend_for_lead(session, lead)
+        assert at_60.minimum_hourly_earnings == 60
+        assert at_60.minimum_price == 5_450
+        assert at_60.recommended == 3_400
+        assert at_60.below_minimum and at_60.warnings
 
 
 def test_completed_paid_projects_move_to_stage_two(tmp_path) -> None:
@@ -152,38 +171,47 @@ def test_completed_paid_projects_move_to_stage_two(tmp_path) -> None:
                 session, proof_type="Paid Project", title=f"Site {index}", niche="roofing",
                 status="Completed", client_work=True, verified=True,
             )
-        pricing = SellerPricingService(operator_rate=35).recommend_for_lead(session, lead)
+        pricing = SellerPricingService(minimum_hourly_earnings=35).recommend_for_lead(session, lead)
         assert pricing.pricing_stage == 2
         assert pricing.recommended == 3_900
         assert pricing.stretch == 4_500
 
 
-def test_operator_rate_setting_is_read_and_clamped(tmp_path, monkeypatch) -> None:
+def test_pricing_settings_are_read_and_clamped(tmp_path, monkeypatch) -> None:
     monkeypatch.setenv("LPM_APP_DATA_DIR", str(tmp_path))
-    monkeypatch.setenv("LPM_OPERATOR_HOURLY_RATE", "45")
-    assert operator_hourly_rate() == 45
-    (tmp_path / "settings.json").write_text(json.dumps({"operator_hourly_rate": "55"}), encoding="utf-8")
-    assert operator_hourly_rate() == 55
-    (tmp_path / "settings.json").write_text(json.dumps({"operator_hourly_rate": "nonsense"}), encoding="utf-8")
-    assert operator_hourly_rate() == 35
-    monkeypatch.setenv("LPM_OPERATOR_HOURLY_RATE", "5000")
+    monkeypatch.setenv("LPM_MINIMUM_HOURLY_EARNINGS", "45")
+    monkeypatch.delenv("LPM_RAISE_QUOTES_TO_MINIMUM", raising=False)
+    assert minimum_hourly_earnings() == 45
+    assert raise_quotes_to_minimum() is False
+    (tmp_path / "settings.json").write_text(
+        json.dumps({"minimum_hourly_earnings": "55", "raise_quotes_to_minimum": "true"}), encoding="utf-8",
+    )
+    assert minimum_hourly_earnings() == 55
+    assert raise_quotes_to_minimum() is True
+    (tmp_path / "settings.json").write_text(json.dumps({"minimum_hourly_earnings": "nonsense"}), encoding="utf-8")
+    assert minimum_hourly_earnings() == 35
+    monkeypatch.setenv("LPM_MINIMUM_HOURLY_EARNINGS", "5000")
+    monkeypatch.setenv("LPM_RAISE_QUOTES_TO_MINIMUM", "yes")
     (tmp_path / "settings.json").write_text("{}", encoding="utf-8")
-    assert operator_hourly_rate() == 35
+    assert minimum_hourly_earnings() == 35
+    assert raise_quotes_to_minimum() is True
 
 
-def test_walk_away_never_reaches_customer_material(tmp_path) -> None:
+def test_minimum_check_never_reaches_customer_material(tmp_path) -> None:
     config = AppConfig(tmp_path, tmp_path / "customer.sqlite3", tmp_path / "app.log", tmp_path)
     factory = create_session_factory(config.database_path)
     initialize_database(factory)
     with factory() as session:
-        lead = _lead(session, "Five-Page Service Site + Booking Route", place_id="customer-lead")
-        customer = ProposalService(config).generate_proposal(session, lead, selected_price=3_400)
+        lead = _lead(session, "Technical SEO Repair", place_id="customer-lead")
+        customer = ProposalService(config).generate_proposal(session, lead, selected_price=2_050)
         package = LeadPackageService(config).export_package(session, lead)
-    customer_text = customer.read_text(encoding="utf-8")
-    assert "$3,400" in customer_text
-    assert "walk-away" not in customer_text.lower()
+    customer_text = customer.read_text(encoding="utf-8").casefold()
+    assert "$2,050" in customer_text
+    for private in ("minimum-earnings", "below your minimum", "walk-away", "realistic hours"):
+        assert private not in customer_text
     with zipfile.ZipFile(package) as archive:
         exported = "\n".join(
             archive.read(name).decode("utf-8", errors="ignore") for name in archive.namelist() if name.endswith((".html", ".json", ".txt", ".md"))
-        )
-    assert "walk-away" not in exported.lower()
+        ).casefold()
+    for private in ("minimum-earnings", "below your minimum", "walk-away", "realistic hours"):
+        assert private not in exported

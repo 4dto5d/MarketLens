@@ -528,10 +528,10 @@ def test_final_roofing_acceptance_scenario(tmp_path) -> None:
         # 2,250 / 2,650). Three completed paid projects put the seller at
         # stage 2, so the ask is the 2,250 stage quote. The 1,150 related-family
         # win (+ one 250 proof step) is below that quote and does not lower it.
-        # Easy is one step down but never below the internal walk-away
+        # Easy is one step down but never below the internal minimum flat price
         # (35/h x 24.9 realistic warm hours + $80 cash, card fees = 1,000).
         assert recommendation.pricing_stage == 2
-        assert recommendation.walk_away == 1000
+        assert recommendation.minimum_price == 1000
         assert recommendation.easy_close == 2000
         assert recommendation.recommended == 2250
         assert recommendation.stretch == 2650

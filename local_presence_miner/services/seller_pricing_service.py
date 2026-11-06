@@ -4,17 +4,17 @@ from dataclasses import dataclass, replace
 
 from sqlalchemy.orm import Session
 
-from local_presence_miner.config import operator_hourly_rate
+from local_presence_miner.config import minimum_hourly_earnings, raise_quotes_to_minimum
 from local_presence_miner.database.schema import CompetitorRecord, Lead
 from local_presence_miner.domain.commercial import CurrentOfferContext
 from local_presence_miner.domain.models import StartingOffer
 from local_presence_miner.domain.offer_registry import offer_definition
 from local_presence_miner.domain.seller_economics import (
     STAGE_LABELS,
-    clamp_operator_rate,
+    clamp_hourly_minimum,
+    minimum_price,
     pricing_stage,
     stage_quote,
-    walk_away,
 )
 from local_presence_miner.services.comparable_offer_service import ComparableOfferAnalysis, ComparableOfferService
 from local_presence_miner.services.pricing_calibration import ProjectValue, estimate_project_value
@@ -46,10 +46,14 @@ class SellerPricingRecommendation:
     relevant_proof_sentence: str
     price_answer: str
     objections: tuple[tuple[str, str], ...]
-    # Internal seller economics (never customer-facing).
-    walk_away: int | None = None
+    # Internal seller economics (never customer-facing). Clients always get a
+    # flat price; ``minimum_price`` is the lowest flat price for this exact
+    # scope that clears ``minimum_hourly_earnings`` on realistic hours.
+    minimum_price: int | None = None
     pricing_stage: int = 1
-    operator_rate: int | None = None
+    minimum_hourly_earnings: int | None = None
+    below_minimum: bool = False
+    raised_to_minimum: bool = False
     warnings: tuple[str, ...] = ()
 
     @property
@@ -73,9 +77,10 @@ class SellerPricingRecommendation:
 
 
 class SellerPricingService:
-    def __init__(self, operator_rate: int | None = None) -> None:
-        """``operator_rate`` overrides the saved walk-away hourly rate (mainly for tests)."""
-        self.operator_rate = clamp_operator_rate(operator_rate) if operator_rate is not None else None
+    def __init__(self, minimum_hourly_earnings: int | None = None, raise_to_minimum: bool | None = None) -> None:
+        """Optional overrides of the saved pricing settings (mainly for tests)."""
+        self.minimum_hourly_earnings = clamp_hourly_minimum(minimum_hourly_earnings) if minimum_hourly_earnings is not None else None
+        self.raise_to_minimum = raise_to_minimum
 
     def recommend_for_lead(
         self, session: Session, lead: Lead, competitors: list[CompetitorRecord] | None = None
@@ -139,8 +144,9 @@ class SellerPricingService:
         definition = offer_definition(project.offer_id)
         stage = pricing_stage(proof.completed_paid_projects)
         quote = stage_quote(definition, stage)
-        rate = self.operator_rate if self.operator_rate is not None else operator_hourly_rate()
-        floor = walk_away(definition, rate=rate, stage=stage)
+        rate = self.minimum_hourly_earnings if self.minimum_hourly_earnings is not None else minimum_hourly_earnings()
+        raise_mode = self.raise_to_minimum if self.raise_to_minimum is not None else raise_quotes_to_minimum()
+        floor = minimum_price(definition, rate=rate, stage=stage)
         step = price_step(quote)
         reasons = list(project.reasoning)
         warnings: list[str] = []
@@ -170,14 +176,29 @@ class SellerPricingService:
                 "No comparable wins exist; the ask is the stage catalog quote. A missing portfolio is handled with "
                 "scope and proof, not an automatic discount."
             )
+        below_minimum = False
+        raised = False
         if floor is not None:
-            reasons.append(floor.explanation())
+            reasons.append(floor.explanation(recommended))
             if floor.amount > recommended:
-                warnings.append(
-                    f"At ${rate}/h and realistic {floor.route} hours this exact scope needs at least ${floor.amount:,}, "
-                    f"above the ${recommended:,} catalog quote. Quote the floor, narrow the scope, or pursue it through a warmer route."
-                )
-                recommended = floor.amount
+                below_minimum = True
+                pays = floor.effective_hourly(recommended)
+                if raise_mode:
+                    warnings.append(
+                        f"The ${recommended:,} flat price would pay about ${pays:,.0f}/h on realistic {floor.route} hours, "
+                        f"below your ${rate}/h minimum, so the quote was raised to ${floor.amount:,} "
+                        "('raise quotes to minimum' is on)."
+                    )
+                    recommended = floor.amount
+                    raised = True
+                else:
+                    warnings.append(
+                        f"Below your minimum: the ${recommended:,} flat price pays about ${pays:,.0f}/h on realistic "
+                        f"{floor.route} hours, under your ${rate}/h minimum (this scope needs ${floor.amount:,}). "
+                        "Narrow the scope, pursue it through a warmer route, or accept it knowingly."
+                    )
+        # The lower ask is one step down but never below the minimum; when the
+        # flat price is already under the minimum there is no lower ask.
         minimum = floor.amount if floor is not None else recommended
         easy = min(recommended, max(minimum, recommended - step))
         next_quote = stage_quote(definition, stage + 1) if stage < 3 else project.high
@@ -209,9 +230,11 @@ class SellerPricingService:
             relevant_proof_sentence=safe_proof_sentence(proof, lead.category),
             price_answer=price_answer,
             objections=objection_responses(recommended, easy, project, smaller_scope=smaller_scope),
-            walk_away=floor.amount if floor is not None else None,
+            minimum_price=floor.amount if floor is not None else None,
             pricing_stage=stage,
-            operator_rate=rate,
+            minimum_hourly_earnings=rate,
+            below_minimum=below_minimum,
+            raised_to_minimum=raised,
             warnings=tuple(warnings),
         )
 

@@ -101,16 +101,31 @@ def save_settings(app_data_dir: Path, values: dict[str, str]) -> None:
     path.write_text(json.dumps(safe, indent=2), encoding="utf-8")
 
 
-def operator_hourly_rate() -> int:
-    """The operator's walk-away hourly rate (settings.json, then LPM_OPERATOR_HOURLY_RATE, default 35).
-
-    Read without creating directories so pricing can be computed anywhere.
-    """
-    from local_presence_miner.domain.seller_economics import DEFAULT_OPERATOR_RATE, clamp_operator_rate
-
+def _pricing_settings() -> dict[str, str]:
+    # Read without creating directories so pricing can be computed anywhere.
     app_data_dir = Path(os.getenv("LPM_APP_DATA_DIR", default_app_data_dir())).expanduser()
-    settings = _load_settings(app_data_dir / "settings.json")
-    return clamp_operator_rate(_setting(settings, "operator_hourly_rate", "LPM_OPERATOR_HOURLY_RATE", str(DEFAULT_OPERATOR_RATE)))
+    return _load_settings(app_data_dir / "settings.json")
+
+
+def minimum_hourly_earnings() -> int:
+    """Internal minimum-earnings check for flat prices; never shown to clients.
+
+    settings.json ``minimum_hourly_earnings``, then LPM_MINIMUM_HOURLY_EARNINGS, default 35.
+    """
+    from local_presence_miner.domain.seller_economics import DEFAULT_MINIMUM_HOURLY_EARNINGS, clamp_hourly_minimum
+
+    raw = _setting(_pricing_settings(), "minimum_hourly_earnings", "LPM_MINIMUM_HOURLY_EARNINGS", str(DEFAULT_MINIMUM_HOURLY_EARNINGS))
+    return clamp_hourly_minimum(raw)
+
+
+def raise_quotes_to_minimum() -> bool:
+    """False (default): keep the catalog flat price and warn when it pays under the minimum.
+
+    True: raise that quote to the lowest flat price that clears the minimum.
+    settings.json ``raise_quotes_to_minimum``, then LPM_RAISE_QUOTES_TO_MINIMUM.
+    """
+    raw = _setting(_pricing_settings(), "raise_quotes_to_minimum", "LPM_RAISE_QUOTES_TO_MINIMUM", "false")
+    return str(raw).strip().casefold() in {"1", "true", "yes", "on"}
 
 
 def _setting(settings: dict[str, str], key: str, env_name: str, default: str = "") -> str:
