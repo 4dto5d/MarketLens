@@ -4,11 +4,20 @@ from dataclasses import dataclass, replace
 
 from sqlalchemy.orm import Session
 
+from local_presence_miner.config import operator_hourly_rate
 from local_presence_miner.database.schema import CompetitorRecord, Lead
 from local_presence_miner.domain.commercial import CurrentOfferContext
 from local_presence_miner.domain.models import StartingOffer
+from local_presence_miner.domain.offer_registry import offer_definition
+from local_presence_miner.domain.seller_economics import (
+    STAGE_LABELS,
+    clamp_operator_rate,
+    pricing_stage,
+    stage_quote,
+    walk_away,
+)
 from local_presence_miner.services.comparable_offer_service import ComparableOfferAnalysis, ComparableOfferService
-from local_presence_miner.services.pricing_calibration import ProjectValue, estimate_project_value, round_price
+from local_presence_miner.services.pricing_calibration import ProjectValue, estimate_project_value
 from local_presence_miner.services.seller_proof_service import (
     SellerProofSummary,
     safe_proof_sentence,
@@ -37,6 +46,11 @@ class SellerPricingRecommendation:
     relevant_proof_sentence: str
     price_answer: str
     objections: tuple[tuple[str, str], ...]
+    # Internal seller economics (never customer-facing).
+    walk_away: int | None = None
+    pricing_stage: int = 1
+    operator_rate: int | None = None
+    warnings: tuple[str, ...] = ()
 
     @property
     def price_available(self) -> bool:
@@ -59,6 +73,10 @@ class SellerPricingRecommendation:
 
 
 class SellerPricingService:
+    def __init__(self, operator_rate: int | None = None) -> None:
+        """``operator_rate`` overrides the saved walk-away hourly rate (mainly for tests)."""
+        self.operator_rate = clamp_operator_rate(operator_rate) if operator_rate is not None else None
+
     def recommend_for_lead(
         self, session: Session, lead: Lead, competitors: list[CompetitorRecord] | None = None
     ) -> SellerPricingRecommendation:
@@ -118,28 +136,52 @@ class SellerPricingService:
                 price_answer="I do not have enough support to recommend a paid intervention now. Let's confirm the actual need first.",
                 objections=(),
             )
-        step = price_step(project.low)
+        definition = offer_definition(project.offer_id)
+        stage = pricing_stage(proof.completed_paid_projects)
+        quote = stage_quote(definition, stage)
+        rate = self.operator_rate if self.operator_rate is not None else operator_hourly_rate()
+        floor = walk_away(definition, rate=rate, stage=stage)
+        step = price_step(quote)
         reasons = list(project.reasoning)
+        warnings: list[str] = []
+        reasons.append(
+            f"Pricing stage {stage} of 3 ({STAGE_LABELS[stage]}) from {proof.completed_paid_projects} completed paid "
+            f"project(s): catalog quote ${quote:,} ({definition.evidence_class.replace('_', '-')} evidence)."
+        )
+        recommended = quote
         won = [item.offer for item in comparable.offers if item.offer.status == "Won" and item.offer.closed_amount]
         if won:
             newest_won = max(won, key=lambda item: (item.offer_date, item.id or 0))
             history_anchor = max(comparable.median_won_price or 0, newest_won.closed_amount or 0)
             proof_steps = {"Low": 0, "Moderate": 1, "Strong": 2}[proof.evidence_confidence]
-            recommended = history_anchor + proof_steps * step
-            reasons.append(
-                f"Recent/relevant won history anchors the ask near ${history_anchor:,}; "
-                f"{proof.evidence_confidence.lower()} proof supports {proof_steps} transparent ${step:,} step(s)."
-            )
+            anchored = history_anchor + proof_steps * step
+            if anchored > quote:
+                recommended = min(anchored, project.high)
+                reasons.append(
+                    f"Recent/relevant won history anchors the ask near ${history_anchor:,}; "
+                    f"{proof.evidence_confidence.lower()} proof supports {proof_steps} transparent ${step:,} step(s) above the stage quote."
+                )
+            else:
+                reasons.append(
+                    f"Won history near ${history_anchor:,} is at or below the stage quote; earlier lower prices do not lower it."
+                )
         else:
-            starter_share = {"Low": 0.75, "Moderate": 0.85, "Strong": 1.0}[proof.evidence_confidence]
-            recommended = round_price(project.low * starter_share)
             reasons.append(
-                f"No comparable wins exist. The ask uses {int(starter_share * 100)}% of the Project Value floor while "
-                "keeping the documented service-cost band visible; price bands alone do not add or remove deliverables."
+                "No comparable wins exist; the ask is the stage catalog quote. A missing portfolio is handled with "
+                "scope and proof, not an automatic discount."
             )
-        recommended = max(round_price(project.low * 0.6), min(round_price(recommended), project.high))
-        easy = max(round_price(project.low * 0.5), round_price(recommended - step))
-        stretch = min(project.high, max(project.low, round_price(recommended + step)))
+        if floor is not None:
+            reasons.append(floor.explanation())
+            if floor.amount > recommended:
+                warnings.append(
+                    f"At ${rate}/h and realistic {floor.route} hours this exact scope needs at least ${floor.amount:,}, "
+                    f"above the ${recommended:,} catalog quote. Quote the floor, narrow the scope, or pursue it through a warmer route."
+                )
+                recommended = floor.amount
+        minimum = floor.amount if floor is not None else recommended
+        easy = min(recommended, max(minimum, recommended - step))
+        next_quote = stage_quote(definition, stage + 1) if stage < 3 else project.high
+        stretch = max(recommended, next_quote)
         reasons.extend(proof_reasoning(proof, comparable))
         first_scope = starter_scope(scope_items)
         smaller_scope = first_scope != scope_summary
@@ -167,6 +209,10 @@ class SellerPricingService:
             relevant_proof_sentence=safe_proof_sentence(proof, lead.category),
             price_answer=price_answer,
             objections=objection_responses(recommended, easy, project, smaller_scope=smaller_scope),
+            walk_away=floor.amount if floor is not None else None,
+            pricing_stage=stage,
+            operator_rate=rate,
+            warnings=tuple(warnings),
         )
 
 
@@ -215,6 +261,8 @@ def objection_responses(recommended: int, easy: int, project: ProjectValue, *, s
 
 
 def price_step(project_low: int) -> int:
+    if project_low < 500:
+        return 50
     if project_low < 1000:
         return 100
     if project_low < 2500:

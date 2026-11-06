@@ -782,12 +782,16 @@ def test_accepted_conversion_offer_keeps_scope_theme_outcome_and_pricing_aligned
 @pytest.mark.parametrize("offer_id,family,theme,scope_start", [
     ("google_presence_cleanup", "google_presence", "Google presence", "Public Google presence"),
     ("conversion_tune_up", "website_conversion", "Conversion path", "Homepage CTA"),
-    ("starter_local_presence_build", "website_build", "Digital foundation", "Focused one-page"),
+    ("starter_local_presence_build", "website_build", "Digital foundation", "Focused three-page"),
     ("one_page_conversion_site", "website_build", "Website conversion", "One-page"),
     ("full_local_authority_site", "website_build", "Service visibility support", "Service-page"),
     ("review_trust_builder", "reviews", "Trust proof", "Verified review"),
     ("monitoring_review_growth", "monitoring", "Public presence monitoring", "Public presence monitoring"),
-    ("no_track_record_pilot", "pilot", "Pilot", "Fixed-scope"),
+    ("no_track_record_pilot", "pilot", "Paid first step", "Paid public review"),
+    ("paid_fix", "website_conversion", "Specific fix", "One root-cause fix"),
+    ("five_page_service_site", "website_build", "Service website rebuild", "Five-page service site"),
+    ("platform_migration", "website_build", "Platform move", "Domain-first migration"),
+    ("sign_quote_intake", "workflow", "Quote intake", "Quote-ready intake"),
 ])
 def test_all_canonical_offers_keep_product_semantics_with_google_assessment(
     tmp_path, offer_id, family, theme, scope_start,
@@ -1045,13 +1049,13 @@ def test_search_market_fusion_keeps_conversation_inside_selected_google_offer(tm
 def test_offer_semantic_version_changes_context_provenance(tmp_path, monkeypatch) -> None:
     import local_presence_miner.services.commercial_plan_service as commercial_plan
 
-    assert OFFER_REGISTRY_VERSION == 4
+    assert OFFER_REGISTRY_VERSION == 5
     _config, factory, lead_id = _setup(tmp_path, offer_id="conversion_tune_up")
     with factory() as session:
         lead = session.get(Lead, lead_id)
         current, _ = build_current_offer_context(session, lead, competitors=[])
-        assert current.registry_version == 4
-        monkeypatch.setattr(commercial_plan, "OFFER_REGISTRY_VERSION", 3)
+        assert current.registry_version == 5
+        monkeypatch.setattr(commercial_plan, "OFFER_REGISTRY_VERSION", 4)
         prior, _ = build_current_offer_context(session, lead, competitors=[])
         assert prior.scope == current.scope
         assert prior.context_fingerprint != current.context_fingerprint
@@ -1059,5 +1063,5 @@ def test_offer_semantic_version_changes_context_provenance(tmp_path, monkeypatch
         persist_current_plan(session, lead, competitors=[], pricing=prior_pricing, context=prior_context)
         session.commit()
         assert not current_plan_dependency_errors(session, lead)
-        monkeypatch.setattr(commercial_plan, "OFFER_REGISTRY_VERSION", 4)
+        monkeypatch.setattr(commercial_plan, "OFFER_REGISTRY_VERSION", 5)
         assert current_plan_dependency_errors(session, lead)

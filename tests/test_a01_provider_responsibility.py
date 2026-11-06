@@ -170,19 +170,19 @@ def test_desired_service_only_positive_reaches_price_proof_and_ready_agreement(s
         assert context.intervention_assessment["owner_fit_status"] == "confirmed"
         assert context.scope == SEO_SCOPE
         assert sales.smart_offer.offer_id == context.offer_id == "conversion_tune_up"
-        assert pricing.price_available and pricing.recommended == 350
+        assert pricing.price_available and pricing.recommended == 950
         proof = SalesEvidenceService().build(session, lead)
         assert proof.selected_evidence["page_url"] == PAGE
         SalesEvidenceService().record_review(session, lead, context=context, reviewer="Sammi", source_text="Source and selected page checked.")
         fields, prerequisites = delivery_facts()
-        DeliveryPacketService().record(session, lead, context=context, fields=fields, selected_price=350,
+        DeliveryPacketService().record(session, lead, context=context, fields=fields, selected_price=950,
                                        reviewer="Sammi", source_text="Owner agrees to the independent page-text work.",
                                        reviewed=True, owner_approved=True, prerequisites=prerequisites)
         assert DeliveryPacketService().build(session, lead)["ready_for_payment"]
-        saved = save_offer_history(session, status="Accepted", **agreement(lead, 350))
+        saved = save_offer_history(session, status="Accepted", **agreement(lead, 950))
         assert saved.status == "Accepted" and saved.canonical_offer_id == "conversion_tune_up"
-        proposal = ProposalService(config).generate_proposal(session, lead, selected_price=350).read_text(encoding="utf-8")
-        assert "$350" in proposal
+        proposal = ProposalService(config).generate_proposal(session, lead, selected_price=950).read_text(encoding="utf-8")
+        assert "$950" in proposal
         assert snapshot.payload_json == source_bytes and owner.value_json == owner_bytes
 
 
@@ -201,7 +201,7 @@ def test_overlap_holds_every_sales_surface_and_new_payable_progression(storage, 
         lead, snapshot, prior_owner = owner_desired_business(session)
         source_bytes, prior_owner_bytes = snapshot.payload_json, prior_owner.value_json
         _, pricing, _ = plan(session, lead)
-        assert pricing.price_available and pricing.recommended == 350
+        assert pricing.price_available and pricing.recommended == 950
         owner = append_owner_strategy(
             session, lead, provider_strategy(value, scope=provider_scope), owner_confirmed=True,
             source_text=f"Our existing provider handles {value}.", supersedes_assertion_id=prior_owner.id,
@@ -218,26 +218,26 @@ def test_overlap_holds_every_sales_surface_and_new_payable_progression(storage, 
         drafts = OutreachService(SenderInfo(name="Ben")).generate_all(lead, session=session, competitors=[])
         assert set(drafts) == set(OutreachKind)
         for kind, draft in drafts.items():
-            assert "$350" not in json.dumps(draft), kind
-        assert "$350" not in guide
+            assert "$950" not in json.dumps(draft), kind
+        assert "$950" not in guide
         proof = SalesEvidenceService().build(session, lead)
         assert not proof.selected_evidence
         assert "provider" in proof.owner_question.casefold()
         with pytest.raises(ValueError):
-            ProposalService(config).generate_proposal(session, lead, selected_price=350)
+            ProposalService(config).generate_proposal(session, lead, selected_price=950)
         proposal = ProposalService(config).generate_proposal(session, lead).read_text(encoding="utf-8")
-        assert "$350" not in proposal and "provider" in proposal.casefold()
+        assert "$950" not in proposal and "provider" in proposal.casefold()
         fields, prerequisites = delivery_facts()
         with pytest.raises(ValueError, match="supported scope"):
-            DeliveryPacketService().record(session, lead, fields=fields, selected_price=350, reviewer="Sammi",
+            DeliveryPacketService().record(session, lead, fields=fields, selected_price=950, reviewer="Sammi",
                                            source_text="Attempt to agree the duplicate SEO work.", reviewed=True,
                                            owner_approved=True, prerequisites=prerequisites)
         packet = DeliveryPacketService().build(session, lead)
         assert not packet["ready_for_payment"] and not packet["scope"]
         for status in ("Accepted", "Won"):
             with pytest.raises(ValueError, match="delivery packet"):
-                save_offer_history(session, status=status, closed_amount=350 if status == "Won" else None,
-                                   **agreement(lead, 350))
+                save_offer_history(session, status=status, closed_amount=950 if status == "Won" else None,
+                                   **agreement(lead, 950))
         assert snapshot.payload_json == source_bytes
         assert prior_owner.value_json == prior_owner_bytes and owner.value_json == owner_bytes
 
@@ -254,7 +254,7 @@ def test_provider_correction_revokes_a_previously_ready_packet_and_survives_rest
             source_text="Owner approved the then-current separate scope.", reviewed=True, owner_approved=True, prerequisites=prerequisites,
         )
         assert DeliveryPacketService().build(session, lead)["ready_for_payment"]
-        draft = save_offer_history(session, status="Draft", **agreement(lead, 350))
+        draft = save_offer_history(session, status="Draft", **agreement(lead, 950))
         old_packet_bytes, source_bytes = old_packet.value_json, snapshot.payload_json
         owner = append_owner_strategy(
             session, lead, provider_strategy("website maintenance"), owner_confirmed=True,
@@ -265,7 +265,7 @@ def test_provider_correction_revokes_a_previously_ready_packet_and_survives_rest
         for status in ("Accepted", "Won"):
             with pytest.raises(ValueError, match="delivery packet"):
                 save_offer_history(session, offer_id=draft.id, status=status,
-                                   closed_amount=350 if status == "Won" else None, **agreement(lead, 350))
+                                   closed_amount=950 if status == "Won" else None, **agreement(lead, 950))
         assert draft.status == "Draft"
         assert old_packet.value_json == old_packet_bytes and snapshot.payload_json == source_bytes
         identity = lead.id
@@ -302,5 +302,5 @@ def test_confirmed_nonoverlap_preserves_real_paid_plan_and_proof(storage, value,
         assert context.intervention_assessment["owner_fit_status"] == "confirmed"
         assert context.scope == SEO_SCOPE
         assert sales.smart_offer.offer_id == "conversion_tune_up"
-        assert pricing.price_available and pricing.recommended == 350
+        assert pricing.price_available and pricing.recommended == 950
         assert SalesEvidenceService().build(session, lead).selected_evidence["page_url"] == PAGE

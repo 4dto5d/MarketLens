@@ -21,6 +21,45 @@ from local_presence_miner.domain.scoring import website_evidence_state, website_
 from local_presence_miner.services.outreach_planner import build_outreach_channel_plan
 from local_presence_miner.services.pricing_calibration import estimate_project_value, round_price
 
+# Frozen registry-v4 service bands used ONLY by the legacy Qualification
+# triage heuristic. Registry v5 repriced every quote; repricing must not
+# silently reclassify triage/contact state. New v5 offers borrow the band of
+# the closest v4 offer. These are not quotes or buyer-value claims.
+_LEGACY_TRIAGE_BANDS: dict[str, tuple[int, int]] = {
+    "google_presence_cleanup": (250, 600),
+    "conversion_tune_up": (450, 1_000),
+    "starter_local_presence_build": (750, 1_800),
+    "one_page_conversion_site": (900, 2_200),
+    "full_local_authority_site": (2_000, 5_000),
+    "review_trust_builder": (300, 900),
+    "monitoring_review_growth": (150, 500),
+    "no_track_record_pilot": (300, 900),
+}
+_LEGACY_TRIAGE_EQUIVALENT: dict[str, str] = {
+    "paid_fix": "conversion_tune_up",
+    "five_page_service_site": "full_local_authority_site",
+    "five_page_b2b_site": "full_local_authority_site",
+    "multi_location_site": "full_local_authority_site",
+    "platform_migration": "starter_local_presence_build",
+    "booking_payments_setup": "conversion_tune_up",
+    "website_care_plan": "monitoring_review_growth",
+    "technical_seo_repair": "one_page_conversion_site",
+    "local_seo_service_project": "one_page_conversion_site",
+    "ai_factual_baseline": "google_presence_cleanup",
+    "estimate_ready_inquiry": "conversion_tune_up",
+    "consultation_project_proof": "full_local_authority_site",
+    "sign_quote_intake": "one_page_conversion_site",
+    "sign_intake_approval_bundle": "full_local_authority_site",
+    "site_profile_review_bundle": "full_local_authority_site",
+    "source_linked_production_batch": "starter_local_presence_build",
+    "educator_resource_library": "starter_local_presence_build",
+}
+
+
+def legacy_triage_band(offer_id: str) -> tuple[int, int] | None:
+    key = _LEGACY_TRIAGE_EQUIVALENT.get(offer_id, offer_id)
+    return _LEGACY_TRIAGE_BANDS.get(key)
+
 
 @dataclass(frozen=True)
 class QualificationFactor:
@@ -83,6 +122,10 @@ class QualificationService:
         # that shared helper must not silently reclassify contact/triage state.
         # This local compatibility calculation is NOT a quote or buyer-value claim.
         catalog_low, catalog_high = project.low, project.high
+        legacy_band = legacy_triage_band(project.offer_id) if project.offer_id else None
+        if catalog_low is not None and catalog_high is not None and legacy_band is not None:
+            catalog_low, catalog_high = legacy_band
+            project = replace(project, low=catalog_low, high=catalog_high)
         if catalog_low is not None and catalog_high is not None:
             if lead.lead_score >= 75:
                 project = replace(project, low=round_price(catalog_low * 1.15), high=round_price(catalog_high * 1.15))
@@ -240,7 +283,7 @@ class QualificationService:
             "commercial_potential",
             "Commercial potential proxy",
             commercial,
-            f"{category_reason}; current project-value band {project.range_text}. This is a prioritization heuristic, not proof of budget.",
+            f"{category_reason}; legacy triage band {project.range_text} (not the quote). This is a prioritization heuristic, not proof of budget.",
         )
         if commercial >= 11:
             positives.append("The niche and likely project scope give one additional customer meaningful economic value.")

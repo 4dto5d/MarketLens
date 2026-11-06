@@ -274,18 +274,22 @@ def test_seller_evidence_changes_ask_but_not_project_value(tmp_path) -> None:
         lead = make_lead(session)
         before = SellerPricingService().recommend_for_lead(session, lead)
         project_before = estimate_project_value(lead)
-        for index in range(2):
+        # v5: three completed paid projects move the seller to pricing stage 2.
+        for index in range(3):
             save_seller_proof(
                 session,
                 proof_type="Paid Project",
                 title=f"Roof project {index}",
                 niche="roofing",
+                status="Completed",
+                client_work=True,
                 verified=True,
             )
         save_offer(session, business="Prior Roof Win", niche="roofing", ask=1200, status="Won", closed=1100)
         after = SellerPricingService().recommend_for_lead(session, lead)
         project_after = estimate_project_value(lead)
         assert (project_before.low, project_before.high) == (project_after.low, project_after.high)
+        assert (before.pricing_stage, after.pricing_stage) == (1, 2)
         assert after.recommended > before.recommended
 
 
@@ -516,16 +520,21 @@ def test_final_roofing_acceptance_scenario(tmp_path) -> None:
                 verified=True,
             )
         recommendation = SellerPricingService().recommend_for_lead(session, lead)
-        assert recommendation.project.low == 900
+        assert recommendation.project.low == 1950
         # v0.1.14 records HVAC as a transparent same-family comparison rather
         # than silently treating it as a roofing result.  The historical offer
         # is therefore eligible as related home-service evidence.
-        # The catalog band is 900-2200, without a GrowthScore uplift. The
-        # 1150 related-family win anchors the ask; seller proof adds one 100
-        # step, not a fictitious prospect-value or opportunity premium.
-        assert recommendation.easy_close == 1150
-        assert recommendation.recommended == 1250
-        assert recommendation.stretch == 1350
+        # Registry v5: the catalog band is 1,950-2,650 (stage quotes 1,950 /
+        # 2,250 / 2,650). Three completed paid projects put the seller at
+        # stage 2, so the ask is the 2,250 stage quote. The 1,150 related-family
+        # win (+ one 250 proof step) is below that quote and does not lower it.
+        # Easy is one step down but never below the internal walk-away
+        # (35/h x 24.9 realistic warm hours + $80 cash, card fees = 1,000).
+        assert recommendation.pricing_stage == 2
+        assert recommendation.walk_away == 1000
+        assert recommendation.easy_close == 2000
+        assert recommendation.recommended == 2250
+        assert recommendation.stretch == 2650
         assert recommendation.confidence == "Moderate"
         assert recommendation.proof.completed_paid_projects == 3
         assert recommendation.proof.relevant_niche_projects == 2

@@ -101,6 +101,18 @@ def save_settings(app_data_dir: Path, values: dict[str, str]) -> None:
     path.write_text(json.dumps(safe, indent=2), encoding="utf-8")
 
 
+def operator_hourly_rate() -> int:
+    """The operator's walk-away hourly rate (settings.json, then LPM_OPERATOR_HOURLY_RATE, default 35).
+
+    Read without creating directories so pricing can be computed anywhere.
+    """
+    from local_presence_miner.domain.seller_economics import DEFAULT_OPERATOR_RATE, clamp_operator_rate
+
+    app_data_dir = Path(os.getenv("LPM_APP_DATA_DIR", default_app_data_dir())).expanduser()
+    settings = _load_settings(app_data_dir / "settings.json")
+    return clamp_operator_rate(_setting(settings, "operator_hourly_rate", "LPM_OPERATOR_HOURLY_RATE", str(DEFAULT_OPERATOR_RATE)))
+
+
 def _setting(settings: dict[str, str], key: str, env_name: str, default: str = "") -> str:
     value = settings.get(key)
     if value not in (None, ""):
