@@ -18,6 +18,7 @@ from local_presence_miner.services.credibility_service import CredibilityService
 from local_presence_miner.services.delivery_packet_service import DeliveryPacketService
 from local_presence_miner.services.google_presence_service import assessment_to_dict
 from local_presence_miner.services.pricing_menu import SERVICE_TIERS
+from local_presence_miner.services.prospect_finding_service import selected_proposal_ai_evidence
 from local_presence_miner.services.report_service import lead_artifact_slug
 from local_presence_miner.services.sales_evidence_service import SalesEvidenceService
 
@@ -27,7 +28,7 @@ class ProposalService:
         template_dir = Path(__file__).resolve().parents[1] / "templates"
         self.env = Environment(
             loader=FileSystemLoader(template_dir),
-            autoescape=select_autoescape(["html", "xml"]),
+            autoescape=select_autoescape(["html", "xml", "html.j2", "xml.j2"]),
         )
         self.config = config
 
@@ -38,6 +39,7 @@ class ProposalService:
         *,
         selected_price: int | None = None,
         internal: bool = False,
+        ai_finding_refs: list[str] | None = None,
     ) -> Path:
         competitors = list(session.execute(select(CompetitorRecord).where(CompetitorRecord.lead_id == lead.id)).scalars())
         audit = audit_from_record(lead.audit)
@@ -45,6 +47,7 @@ class ProposalService:
         sales_evidence = SalesEvidenceService().build(session, lead, assessment=context.intervention_assessment,
                                                     offer_id=context.offer_id, scope=context.scope)
         delivery_packet = DeliveryPacketService().build(session, lead, context=context, selected_price=selected_price)
+        ai_observations = selected_proposal_ai_evidence(session, lead.id, ai_finding_refs)
         offer = adaptive_plan.smart_offer
         if selected_price is not None and not pricing.price_available:
             raise ValueError("Current evidence does not support a paid proposal; validate the intervention first.")
@@ -81,6 +84,7 @@ class ProposalService:
             "internal": internal,
             "sales_evidence": list(sales_evidence.identity()),
             "delivery_packet": delivery_packet,
+            "manual_ai_observations": ai_observations,
         }
         html = self.env.get_template("proposal.html.j2").render(
             lead=lead,
@@ -99,6 +103,7 @@ class ProposalService:
             competitors_verified=competitors_verified,
             sales_evidence=sales_evidence,
             delivery_packet=delivery_packet,
+            ai_observations=ai_observations,
         )
         rendered_sha256 = hashlib.sha256(html.encode("utf-8")).hexdigest()
         commercial_fingerprint = fingerprint(
@@ -130,7 +135,8 @@ class ProposalService:
         *,
         selected_price: int | None = None,
         internal: bool = False,
+        ai_finding_refs: list[str] | None = None,
     ) -> Path:
-        path = self.generate_proposal(session, lead, selected_price=selected_price, internal=internal)
+        path = self.generate_proposal(session, lead, selected_price=selected_price, internal=internal, ai_finding_refs=ai_finding_refs)
         webbrowser.open(path.resolve().as_uri())
         return path

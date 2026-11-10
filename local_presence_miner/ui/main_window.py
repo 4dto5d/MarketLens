@@ -42,6 +42,7 @@ from local_presence_miner.ui.components import InfoBanner, PageHeader, SectionHe
 from local_presence_miner.ui.components.action_toolbar import action_button
 from local_presence_miner.ui.dialogs.lead_detail_dialog import LeadDetailDialog
 from local_presence_miner.ui.dialogs.new_search_dialog import NewSearchDialog
+from local_presence_miner.ui.dialogs.opportunity_workflow_dialog import OpportunityWorkflowDialog
 from local_presence_miner.ui.dialogs.settings_dialog import SettingsDialog
 from local_presence_miner.ui.icons import app_icon
 from local_presence_miner.ui.theme import load_stylesheet
@@ -232,6 +233,7 @@ class MainWindow(QMainWindow):
         self.page_header.clear_actions()
         if name in {"Dashboard", "Lead Searches", "Leads"}:
             self.page_header.add_action(action_button("New Search", self.open_new_search, role="primary", icon="search"))
+            self.page_header.add_action(action_button("Add Warm Opportunity", self.add_warm_opportunity, role="secondary", icon="add"))
         elif name == "Review Queue":
             self.page_header.add_action(action_button("Next Lead", self.review.next_lead, role="primary", icon="next"))
         elif name == "Pricing Intelligence":
@@ -445,6 +447,15 @@ class MainWindow(QMainWindow):
 
     def open_lead(self, lead_id: int) -> None:
         LeadDetailDialog(self.config, self.session_factory, lead_id, self).exec()
+        self.refresh_pages()
+
+    def add_warm_opportunity(self) -> None:
+        dialog = OpportunityWorkflowDialog(self.session_factory, parent=self)
+        dialog.exec()
+        if dialog.lead_id is not None:
+            workspace = LeadDetailDialog(self.config, self.session_factory, dialog.lead_id, self)
+            workspace.open_workflow_destination(dialog.destination)
+            workspace.exec()
         self.refresh_pages()
 
     def generate_all_reports(self) -> None:

@@ -157,7 +157,7 @@ class DeliveryPacketService:
 
         packet = self.build(session, lead, context=context, selected_price=selected_price)
         env = Environment(loader=FileSystemLoader(Path(__file__).resolve().parents[1] / "templates"),
-                          autoescape=select_autoescape(["html", "xml"]))
+                          autoescape=select_autoescape(["html", "xml", "html.j2", "xml.j2"]))
         html = env.get_template("delivery_packet.html.j2").render(delivery_packet=packet)
         digest = hashlib.sha256(html.encode("utf-8")).hexdigest()[:16]
         path = config.output_dir / "delivery" / f"{lead_artifact_slug(lead)}-delivery--{digest}.html"

@@ -13,6 +13,9 @@ from pathlib import Path
 from sqlalchemy import text
 from sqlalchemy.orm import Session, sessionmaker
 
+from local_presence_miner.database.opportunity_intelligence_migration import install_intelligence_guards
+from local_presence_miner.database.opportunity_intelligence_repository import IntelligenceRun  # noqa: F401 - register additive tables
+from local_presence_miner.database.prospect_finding_migration import backup_before_findings, install_finding_guards
 from local_presence_miner.database.schema import Base
 
 
@@ -38,8 +41,12 @@ def initialize_database(session_factory: sessionmaker[Session]) -> None:
     backup_database_before_search_market(engine)
     backup_database_before_seo_research(engine)
     backup_database_before_center_provenance(engine)
+    backup_before_findings(engine)
+    backup_before_findings(engine, disclosure_upgrade=True)
     Base.metadata.create_all(engine)
+    install_intelligence_guards(engine)
     install_seo_ledger_guards(engine)
+    install_finding_guards(engine)
     with engine.begin() as connection:
         for table_name, columns in SQLITE_COLUMNS.items():
             existing = {
@@ -1357,6 +1364,7 @@ ColumnSpec = tuple[str, str]
 
 
 SQLITE_COLUMNS: dict[str, Iterable[ColumnSpec]] = {
+    'prospect_finding_revisions': [('customer_copy_contract_version','INTEGER NOT NULL DEFAULT 0')],
     "search_visibility_probes": [
         ("center_resolution_provenance_json", "TEXT NOT NULL DEFAULT '{}'"),
         ("market_query_id", "INTEGER REFERENCES search_market_queries(id)"),

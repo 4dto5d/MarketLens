@@ -14,7 +14,7 @@ from typing import Any, Literal
 from local_presence_miner.domain.offer_registry import OfferID
 from local_presence_miner.domain.owner_strategy import capacity_constrained, owner_fit_for_scope
 
-ASSESSMENT_VERSION = 10
+ASSESSMENT_VERSION = 11
 AssessmentState = Literal["recommended", "validate_first", "insufficient_evidence", "no_sale"]
 CandidateStatus = Literal["recommended", "validate_first"]
 Fit = Literal["High", "Moderate", "Low"]

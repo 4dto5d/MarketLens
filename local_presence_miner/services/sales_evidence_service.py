@@ -15,9 +15,10 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy import select
 
-from local_presence_miner.database.repositories import audit_from_record, loads
+from local_presence_miner.database.repositories import loads
 from local_presence_miner.database.schema import CompetitorRecord, ConversationAssertion, GooglePresenceAssessment, WebsiteAuditRecord
 from local_presence_miner.domain.commercial import fingerprint
+from local_presence_miner.domain.prospect_findings import utc_text
 from local_presence_miner.domain.website_evidence import capture_state
 
 if TYPE_CHECKING:  # pragma: no cover - imports only for static checking
@@ -96,12 +97,13 @@ class SalesEvidenceService:
 
         audit = session.scalar(select(WebsiteAuditRecord).where(WebsiteAuditRecord.lead_id == lead.id))
         if audit is not None:
-            projected = audit_from_record(audit)
-            weaknesses = self._strings(audit.weaknesses_json)
+            from local_presence_miner.services.prospect_finding_service import reviewed_contact_audit
+
+            projected = reviewed_contact_audit(session, lead, audit, now=now_utc)
+            weaknesses = (tuple(str(value).strip() for value in projected.weaknesses if str(value).strip())
+                          if isinstance(projected.weaknesses, list) else ())
             content_eligible = capture_state(evidence=projected.evidence, url=projected.url, final_url=projected.final_url,
                                              title=projected.title, status_code=projected.status_code) in {"normal", "legacy_unclassified"}
-            if not content_eligible:
-                weaknesses = tuple(projected.weaknesses)
             evidence = loads(audit.evidence_json, {})
             source = (audit.final_url or audit.url or "public website audit").strip()
             if weaknesses:
@@ -224,7 +226,7 @@ class SalesEvidenceService:
 
     @staticmethod
     def _datetime(value: datetime | None) -> str:
-        return value.isoformat() if value is not None else "UNKNOWN"
+        return utc_text(value) or "UNKNOWN"
 
     @staticmethod
     def _as_utc(value: datetime) -> datetime:

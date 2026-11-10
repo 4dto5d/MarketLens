@@ -14,6 +14,7 @@ Core tables:
 - `search_run_leads`: the processing membership for shortlisted candidates; kept separate from the complete visibility observation ledger.
 - `leads`: public business details, CRM status, targeting fields, scores, offer fields, suppression flag.
 - `website_audits`: structured audit checks, metrics, strengths, weaknesses.
+- `prospect_finding_revisions`: immutable same-business source snapshots for contact facts, attributed manual needs and manual AI-response observations; append-only corrections and separate review/interpretation metadata. `customer_copy_approved` applies only to reviewed AI disclosure, never business truth or a priced intervention. `customer_copy_contract_version` defaults to legacy 0; version 2 requires fresh approval of the complete external preview. Eligibility permits per-proposal selection, default none. Owner-attribution v2 snapshots retain original timezone offsets; v1 timezone provenance remains unknown. Guided Opportunity links pin revision/hash references. See [Prospect findings](prospect-findings.md).
 - `competitors`: selected local competitors and reasons.
 - `outreach_drafts`: editable draft text and approval state.
 - `suppression_entries`: values that disable contact approval.

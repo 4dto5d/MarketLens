@@ -404,7 +404,7 @@ def test_l01_short_descriptive_heading_is_not_blocked_by_a_count_threshold(stora
         assert price.price_available and context.scope == ("local SEO title/meta/H1 fixes",)
 
 
-@pytest.mark.parametrize("version", [1, 2, 3, 4, 5])
+@pytest.mark.parametrize("version", [1, 2, 3, 4, 5, 6])
 def test_l01_old_brand_only_normal_capture_is_not_recertified(storage, version):
     from local_presence_miner.database.repositories import audit_from_record
     from local_presence_miner.domain.scoring import website_evidence_state
@@ -513,6 +513,12 @@ def test_l01_isolated_controls_or_subheadings_cannot_rescue_loading(decoration):
 
 
 @pytest.mark.parametrize("body", [
+    "Loading (75%)",
+    "Loading [3/10]",
+    "Loading — 75% complete",
+    "Loading : [3 of 10 resources loaded]",
+    "Please wait while we prepare your page",
+    "Please wait while we assemble your content",
     "Loading... 0% complete. Please wait while the site loads.",
     "Loading... 99.5% complete. Please wait while the site loads.",
     "Loading... 3 of 10 resources loaded. Please wait.",
@@ -582,3 +588,37 @@ def test_l01_current_normal_label_requires_body_proof_not_its_reason(storage, pr
         assert website_evidence_state(audit_from_record(row)) == "uncertain"
         assert_withheld(session, lead, config)
         assert row.evidence_json == original
+
+
+@pytest.mark.parametrize("heading", ["Loading (75%)", "Loading [3/10]", "Loading — 75% complete",
+                                     "Please wait while we prepare your page"])
+def test_l01_imported_status_heading_preserves_uncertainty(storage, heading):
+    from local_presence_miner.database.schema import Lead
+
+    config, factory = storage
+    with factory() as session:
+        lead = business(session)
+        data = payload(session, lead)
+        content = html("Local Plumbing", heading, "") + '<button>Book our repair service</button>'
+        facts, _ = extract_page_analysis(snapshot(content, data["pages"][0]["url"]))
+        data["pages"] = [{**facts, "observed_at": data["observed_at"], "source_ref": "fixture:status-heading"}]
+        row = append_research(session, lead, data)
+        original = (row.payload_json, row.observed_at)
+        assert_withheld(session, lead, config)
+        identity, record_id = lead.id, row.id
+        session.commit()
+    with factory() as session:
+        lead = session.get(Lead, identity)
+        assert_withheld(session, lead, config)
+        from local_presence_miner.database.schema import SEOResearchSnapshot
+
+        row = session.get(SEOResearchSnapshot, record_id)
+        assert (row.payload_json, row.observed_at) == original
+
+
+@pytest.mark.parametrize("body", ["Loading dock repairs for local businesses.",
+                                  "We repair loading docks and offer maintenance services.",
+                                  "Loading (75%). We repair leaks."])
+def test_l01_loading_language_with_business_content_stays_eligible(body):
+    _, details = extract_page_analysis(snapshot(html("Local Plumbing", "Local Plumbing", body)))
+    assert details["response_validity"]["state"] == "normal"

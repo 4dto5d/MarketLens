@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Index, Integer, String, Text, UniqueConstraint, event
+from sqlalchemy import Boolean, CheckConstraint, DateTime, Float, ForeignKey, Index, Integer, String, Text, UniqueConstraint, event
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 from local_presence_miner.time_utils import utc_now
@@ -37,6 +37,50 @@ class SEOResearchSnapshot(Base):
 @event.listens_for(SEOResearchSnapshot, "before_delete")
 def _immutable_seo_snapshot(_mapper, _connection, _target) -> None:
     raise ValueError("SEO evidence is immutable; append a new source checkpoint instead.")
+
+
+class ProspectFindingRevision(Base):
+    """Source-bound review history; source kinds are versioned adapter contracts."""
+
+    __tablename__ = "prospect_finding_revisions"
+    __table_args__ = (
+        UniqueConstraint("lead_id", "finding_key", "revision", name="uq_finding_revision"),
+        UniqueConstraint("previous_id", name="uq_finding_successor"),
+        CheckConstraint("revision >= 1", name="ck_finding_revision_positive"),
+        CheckConstraint("(revision=1 AND previous_id IS NULL) OR (revision>1 AND previous_id IS NOT NULL)", name="ck_finding_chain"),
+        CheckConstraint("finding_type != 'website_contact_path' OR (source_audit_id IS NOT NULL AND finding_key=fact_id)",
+                        name="ck_website_finding_identity"),
+        CheckConstraint("customer_copy_approved=0 OR (finding_type='ai_discoverability' AND review_state='VERIFIED' AND source_checked=1)",
+                        name="ck_finding_copy_approval"),
+        Index("ix_finding_lead_key", "lead_id", "finding_key", "revision"),
+    )
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    lead_id: Mapped[int] = mapped_column(ForeignKey("leads.id", ondelete="RESTRICT"), nullable=False)
+    finding_key: Mapped[str] = mapped_column(String(160), nullable=False)
+    revision: Mapped[int] = mapped_column(Integer, nullable=False)
+    previous_id: Mapped[int | None] = mapped_column(ForeignKey("prospect_finding_revisions.id", ondelete="RESTRICT"), nullable=True)
+    finding_type: Mapped[str] = mapped_column(String(80), nullable=False)
+    fact_id: Mapped[str] = mapped_column(String(160), nullable=False, default="")
+    assertion_kind: Mapped[str] = mapped_column(String(32), nullable=False)
+    source_audit_id: Mapped[int | None] = mapped_column(ForeignKey("website_audits.id", ondelete="RESTRICT"), nullable=True)
+    source_snapshot_json: Mapped[str] = mapped_column(Text, nullable=False)
+    source_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    claim_text: Mapped[str] = mapped_column(Text, nullable=False)
+    inference_text: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    owner_question: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    review_state: Mapped[str] = mapped_column(String(24), nullable=False, default="UNREVIEWED")
+    source_checked: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    customer_copy_approved: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="0")
+    customer_copy_contract_version: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
+    review_note: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    actor_id: Mapped[str] = mapped_column(String(160), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=utc_now)
+
+
+@event.listens_for(ProspectFindingRevision, "before_update")
+@event.listens_for(ProspectFindingRevision, "before_delete")
+def _immutable_finding_revision(_mapper, _connection, _target) -> None:
+    raise ValueError("Finding history is append-only; record a new revision.")
 
 
 class LeadSearch(Base):

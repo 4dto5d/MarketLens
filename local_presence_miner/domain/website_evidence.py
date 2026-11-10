@@ -15,7 +15,7 @@ from urllib.parse import urlsplit, urlunsplit
 
 from local_presence_miner.domain.models import WebsiteAudit
 
-RESPONSE_VERSION = 6
+RESPONSE_VERSION = 7
 _RESPONSE_HEADINGS = (
     ("suspension", r"(?:(?:this|the|your) )?(?:account|hosting(?: account)?|website|site) (?:(?:is|has been|was) )?(?:(?:temporarily|currently) )?suspended"),
     ("parked_domain", r"(?:this )?domain (?:is )?(?:for sale|parked)|buy this domain"),
@@ -42,7 +42,7 @@ _SHELL_CLAUSE = (
 )
 # Full compositions of response-status clauses, never an isolated keyword in
 # business prose. Static branding/Service JSON-LD is not rendered content.
-_UNCERTAIN_SHELL = re.compile(rf"{_SHELL_CLAUSE}(?:[\s,.!…:;\-]+{_SHELL_CLAUSE})*[\s,.!…:;\-]*", re.I)
+_UNCERTAIN_SHELL = re.compile(rf"{_SHELL_CLAUSE}(?:[^\w]+{_SHELL_CLAUSE})*[^\w]*", re.I)
 # Structural greetings/navigation are not descriptions of a business. This
 # vocabulary never filters words inside substantive service prose.
 _INCIDENTAL_LABEL = re.compile(
@@ -52,8 +52,12 @@ _INCIDENTAL_LABEL = re.compile(
 # business evidence either. Require an independently descriptive clause rather
 # than letting a changed progress message defeat the finite shell grammar.
 _STATUS_PREFIX = re.compile(
-    rf"(?:^|[.!…;])\s*{_SHELL_CLAUSE}(?=$|[.!…:;,\-]|\s+(?:\d|please\b))", re.I,
+    rf"(?:^|[.!…;])\s*{_SHELL_CLAUSE}(?=$|[^\w\s]|\s+(?:[^\w\s]|\d|please\b|while\b))", re.I,
 )
+# Punctuation is presentation, not evidence: parentheses, brackets and Unicode
+# dashes around progress cannot certify a loading screen. A status continuation
+# (including unrecognized 'while ...' wording) still needs independent business
+# prose. Ordinary noun phrases such as 'Loading dock repairs' remain eligible.
 _BUSINESS_PROSE = re.compile(
     r"\b(?:we|our\s+(?:team|staff|business|company|technicians))\s+"
     r"(?:\w+\s+){0,2}(?:repair|fix|install|build|design|manage|maintain|sell)\s+\w+|"
@@ -280,7 +284,7 @@ def capture_state(*, evidence: dict, url: str, final_url: str, title: str, statu
         value = json.loads(value) if isinstance(value, str) else value
         if (
             not isinstance(value, dict)
-            or type(value.get("version")) is not int or value["version"] not in {1, 2, 3, 4, 5, RESPONSE_VERSION}
+            or type(value.get("version")) is not int or value["version"] not in {1, 2, 3, 4, 5, 6, RESPONSE_VERSION}
             or page_identity(str(value.get("url", ""))) != page_identity(final_url or url)
             or value.get("status_code") != status_code
             or value.get("state") not in {"normal", "non_normal", "uncertain"}

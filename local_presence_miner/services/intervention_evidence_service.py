@@ -16,6 +16,7 @@ from local_presence_miner.database.repositories import audit_from_record, loads
 from local_presence_miner.database.schema import Lead, WebsiteAuditRecord
 from local_presence_miner.domain.commercial import fingerprint
 from local_presence_miner.domain.intervention_assessment import InterventionEvidence
+from local_presence_miner.domain.prospect_findings import utc_text
 from local_presence_miner.domain.scoring import website_evidence_state
 from local_presence_miner.services.conversation_state_service import ConversationState
 from local_presence_miner.time_utils import utc_now
@@ -43,13 +44,16 @@ def collect_intervention_evidence(
     website_refs: tuple[str, ...] = ()
     if (audit is not None and bool(lead.website)
             and audit.url.rstrip("/") == lead.website.rstrip("/") and current_at(audit.created_at, now)):
-        raw = loads(audit.checks_json, {})
-        if isinstance(raw, dict):
-            checks = {str(key): value for key, value in raw.items() if type(value) is bool}
+        from local_presence_miner.services.prospect_finding_service import reviewed_contact_audit
+
+        projected = reviewed_contact_audit(session, lead, audit, now=now)
+        checks = {str(key): value for key, value in projected.checks.items() if type(value) is bool}
+        # Withholding a fact is not a failed HTTP request. Preserve acquisition
+        # classification even when the last registered check is withheld.
         website_state = website_evidence_state(audit_from_record(audit))
         if website_state != "observed":
             checks = {}
-        identity = {"url": audit.url, "created_at": audit.created_at, "reachable": audit.reachable,
+        identity = {"url": audit.url, "created_at": utc_text(audit.created_at), "reachable": audit.reachable,
                     "status_code": audit.status_code, "checks": checks, "website_state": website_state,
                     "final_url": audit.final_url, "title": audit.title, "evidence": loads(audit.evidence_json, {})}
         website_refs = (f"website_audit:{audit.id}:{fingerprint(identity)}",)

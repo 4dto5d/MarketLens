@@ -72,6 +72,7 @@ from local_presence_miner.services.mockup_service import MockupService
 from local_presence_miner.services.outreach_planner import build_outreach_channel_plan
 from local_presence_miner.services.owner_brief import build_owner_brief
 from local_presence_miner.services.proposal_service import ProposalService
+from local_presence_miner.services.prospect_finding_service import proposal_ai_choices
 from local_presence_miner.services.qualification_service import QualificationService
 from local_presence_miner.services.report_service import ReportService
 from local_presence_miner.services.search_offer_intelligence import accept_advisory_offer
@@ -97,7 +98,10 @@ from local_presence_miner.ui.dialogs.commercial_review_dialog import CommercialR
 from local_presence_miner.ui.dialogs.contact_interaction_dialog import ContactInteractionDialog
 from local_presence_miner.ui.dialogs.guided_call_dialog import GuidedCallDialog
 from local_presence_miner.ui.dialogs.offer_history_dialog import OfferHistoryDialog
+from local_presence_miner.ui.dialogs.opportunity_workflow_dialog import OpportunityWorkflowDialog
 from local_presence_miner.ui.dialogs.outreach_editor_dialog import OutreachEditorDialog
+from local_presence_miner.ui.dialogs.proposal_evidence_dialog import ProposalEvidenceDialog
+from local_presence_miner.ui.widgets.prospect_findings_widget import ProspectFindingsWidget
 from local_presence_miner.ui.widgets.seo_intelligence_widget import SEOIntelligenceWidget
 from local_presence_miner.ui.workers import FunctionWorker
 
@@ -176,6 +180,7 @@ class LeadDetailDialog(QDialog):
         actions.add_action("Copy Website URL", self.open_website, role="secondary")
         actions.add_action("Open Google", self.open_google, role="secondary")
         actions.add_action("Record Contact", self.add_interaction, role="primary")
+        actions.add_action("Guided Opportunity", self.open_opportunity_workflow, role="secondary")
         actions.add_action("Evidence / Delivery Review", self.review_commercial_evidence, role="secondary")
         top.addWidget(actions)
         self.header_layout.addLayout(top)
@@ -286,6 +291,19 @@ class LeadDetailDialog(QDialog):
     def review_commercial_evidence(self) -> None:
         CommercialReviewDialog(self.session_factory, self.lead_id, self).exec()
         self.load()
+
+    def open_opportunity_workflow(self) -> None:
+        dialog = OpportunityWorkflowDialog(self.session_factory, self.lead_id, self)
+        if dialog.exec():
+            self.open_workflow_destination(dialog.destination)
+
+    def open_workflow_destination(self, destination: str) -> None:
+        actions = {"Record Contact": self.add_interaction, "Guided Call": self.open_guided_call,
+                   "Delivery Review": self.review_commercial_evidence}
+        if destination in actions:
+            actions[destination]()
+        elif destination:
+            self.select_tab(destination)
 
     def contact_intelligence_tab(self, lead: Lead, contacts: list[ContactPoint]) -> QWidget:
         widget = QWidget()
@@ -488,17 +506,26 @@ class LeadDetailDialog(QDialog):
         return widget
 
     def audit_tab(self, lead: Lead) -> QWidget:
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
         widget = QWidget()
+        widget.setObjectName("MainContent")
+        scroll.setWidget(widget)
         layout = QVBoxLayout(widget)
         layout.setContentsMargins(16, 14, 16, 14)
         layout.setSpacing(10)
+        findings = ProspectFindingsWidget(self.session_factory, lead.id)
+        findings.findings_changed.connect(self.refresh_after_finding_change)
+        layout.addWidget(findings)
         audit = lead.audit
         if not audit:
             layout.addWidget(
                 InfoBanner("No audit captured yet", "Run or refresh a search with website auditing enabled to collect public-site evidence.", "warning")
             )
-            return widget
-        layout.addWidget(SectionHeader("Audit evidence", "Review and verify public observations before making them part of a sales conversation."))
+            return scroll
+        layout.addWidget(SectionHeader("Captured audit evidence", "Raw observations remain below. Use Source-linked findings above "
+                                       "for durable contact-fact review; legacy row annotations do not override that review."))
         layout.addWidget(
             InfoBanner(
                 "Collected public evidence",
@@ -544,7 +571,11 @@ class LeadDetailDialog(QDialog):
         details.setMaximumHeight(155)
         layout.addWidget(details)
         layout.addStretch(1)
-        return widget
+        return scroll
+
+    def refresh_after_finding_change(self) -> None:
+        self.load()
+        self.select_tab("Audit Evidence")
 
     def save_audit_review(self, key: str, value: str) -> None:
         with self.session_factory() as session:
@@ -1166,7 +1197,17 @@ class LeadDetailDialog(QDialog):
                 50,
             )
             if accepted:
-                ProposalService(self.config).open_proposal(session, lead, selected_price=selected_price)
+                choices = proposal_ai_choices(session, lead.id)
+                references: list[str] = []
+                if choices:
+                    selection = ProposalEvidenceDialog(choices,self)
+                    if not selection.exec():
+                        return
+                    references = selection.selected_references()
+                try:
+                    ProposalService(self.config).open_proposal(session, lead, selected_price=selected_price, ai_finding_refs=references)
+                except ValueError as exc:
+                    QMessageBox.warning(self,'Proposal not generated',str(exc))
 
     def generate_internal_proposal(self) -> None:
         with self.session_factory() as session:

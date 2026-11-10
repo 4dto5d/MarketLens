@@ -43,6 +43,17 @@
   {% include 'intervention_assessment.html.j2' %}
   {% include 'delivery_packet.html.j2' %}
 
+  {% if ai_observations %}
+  {% autoescape true %}
+  <section>
+    <h2>Reviewed Manual AI Response Observations</h2>
+    {% for finding in ai_observations %}
+    <p style="white-space: pre-wrap">{{ finding.disclosure }}</p>
+    {% endfor %}
+  </section>
+  {% endautoescape %}
+  {% endif %}
+
   <section>
     <h2>Why This Recommendation Is Grounded</h2>
     <ul>
