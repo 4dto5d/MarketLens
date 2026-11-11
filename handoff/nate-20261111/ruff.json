@@ -1,0 +1,11 @@
+{
+  "command": [
+    "ruff",
+    "check",
+    "--no-cache",
+    "."
+  ],
+  "source": "C:\\Users\\allin\\OneDrive\\Documents\\Local Presence Miner\\marketlens-response-version-correction-20261111\\worktree",
+  "exit_code": 0,
+  "seconds": 4.01
+}

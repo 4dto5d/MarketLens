@@ -1,0 +1,14 @@
+{
+  "parent_files": 313,
+  "parent_sha256": "94cae46553dcddc619a255b4b8c46f857612ab562f4a926157f5164b8724c1bd",
+  "candidate_files": 314,
+  "candidate_sha256": "c4f92cb7f893cb764d07c22949de95f8bb48798bb57c67bf1fe25747d6dbd9a3",
+  "changes": {
+    "added": 1,
+    "modified": 3,
+    "deleted": 0
+  },
+  "branch": "codex/response-version-correction-20261111",
+  "head": "unborn isolated repository, frozen manifests and patch",
+  "live_provider_requests": 0
+}

@@ -1,6 +1,28 @@
+# November 11 decision-brief correction candidate
+
+This isolated correction starts from the exact 310-file November 10 candidate,
+SHA-256 570d66746cf80793da01f0578ddc42b8d8585d030b478a20f29ca271a0257dc2.
+Use the accompanying correction manifest, receipts and handoff for final identity.
+Policy v4 / output schema 2 correct disclosure, typed evidence/action use, agreement
+binding, operator self-report, active request invalidation and provider receipts.
+Historical records remain retained. Live model quality and independent acceptance
+remain separate verification gates.
+
 # MarketLens — Codex cloud continuation
 
+## November 10 decision-brief candidate
+
+This isolated development increment builds on the verified 304-file citation correction, SHA-256
+`b6e122bae02cea9dfd1aa13de5ca9ea72b4a4932f2c3002762ad40b0d46da7df`, which was not yet on the November 9 GitHub branch.
+The earlier live receipt belongs to that citation correction, not this decision-brief candidate.
+Read the accompanying decision-brief implementation handoff and current manifests for final verification.
+Policy v3 adds explicitly selected source context, mode-specific decision tasks, supported reasoning effort,
+conservative support presentation, readable source/history inspection and navigation into existing owner-confirmation workflows.
+No new live inference or provider research is implied by offline verification. Earlier sections below are historical context.
+
 2026-11-09. Development candidate; independent acceptance and release are separate gates.
+
+November 10 citation correction: advice uses interpretation policy `opportunity-advice.v2`, short packet-local citation labels and schema-enumerated allowed labels. Canonical finding references and hashes remain in immutable snapshots; strict context/source validation is preserved. Older advice stays historical and cannot silently dispatch or be adopted. See `handoff/intelligence-citation-20261110/` for the updated source identity and actual verification outcome; earlier quota-blocked receipts remain historical evidence.
 
 ## Correct source
 

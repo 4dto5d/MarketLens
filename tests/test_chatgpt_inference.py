@@ -204,3 +204,19 @@ def test_watchdog_socket_close_race_is_normalized(monkeypatch, ending):
     with pytest.raises(ValueError) as error:
         module.ChatGPTInference(Auth(), http=HTTP(ClosedSocket())).run(body(), cancel, 60, 16384)
     assert error.value.code == ending
+
+
+@pytest.mark.parametrize("metadata,expected", [
+    ({}, (None, None)),
+    ({"model": "provider-build", "reasoning": {"effort": "medium"}}, ("provider-build", "medium")),
+    ({"model": {"secret": "arbitrary"}, "reasoning": {"effort": "invented"}}, (None, None)),
+])
+def test_completion_preserves_only_allowlisted_effective_metadata(metadata, expected):
+    request = body() | {"model": "gpt-6.1-sol", "reasoning": {"effort": "high"}}
+    stream = Stream([{"type": "response.output_text.delta", "delta": "{}"},
+                     {"type": "response.completed", "response": {"status": "completed", **metadata}}])
+    http = HTTP(stream)
+    result = ChatGPTInference(Auth(), http=http).run(request, Event(), 5, 100)
+    assert (result["provider_model"], result["provider_reasoning_effort"]) == expected
+    assert len(http.calls) == 1
+    assert request["reasoning"] == {"effort": "high"}

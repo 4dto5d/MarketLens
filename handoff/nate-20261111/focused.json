@@ -1,0 +1,28 @@
+{
+  "command": [
+    "pytest",
+    "-q",
+    "-p",
+    "no:cacheprovider",
+    "-n",
+    "3",
+    "--dist",
+    "loadfile",
+    "tests/test_opportunity_intelligence.py",
+    "tests/test_chatgpt_auth.py",
+    "tests/test_chatgpt_inference.py",
+    "tests/test_opportunity_intelligence_ui.py",
+    "tests/test_intelligence_citation_aliases.py",
+    "tests/test_decision_brief_contract.py",
+    "tests/test_decision_brief_consumers.py",
+    "tests/test_decision_brief_context.py",
+    "tests/test_decision_brief_ui.py",
+    "tests/test_decision_brief_owner_answer.py",
+    "tests/test_decision_brief_support_correction.py",
+    "tests/test_decision_brief_disclosure_correction.py",
+    "tests/test_intelligence_response_versions.py"
+  ],
+  "source": "C:\\Users\\allin\\OneDrive\\Documents\\Local Presence Miner\\marketlens-response-version-correction-20261111\\worktree",
+  "exit_code": 0,
+  "seconds": 120.72
+}

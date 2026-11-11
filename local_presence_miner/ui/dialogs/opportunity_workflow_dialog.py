@@ -115,6 +115,7 @@ class OpportunityWorkflowDialog(QDialog):
             self.intelligence = OpportunityIntelligenceWidget(session_factory, lead_id, self)
             self.intelligence.worksheet_reader = self.data
             self.intelligence.worksheet_adopted.connect(self._adopted_worksheet)
+            self.intelligence.destination_requested.connect(self.go)
             self.finished.connect(lambda _result: self.intelligence.cancel())
             form.addRow(self.intelligence)
         review = QPushButton("Calculate planning cost")

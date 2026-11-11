@@ -7,7 +7,7 @@ from threading import Event, Thread
 
 import requests
 
-from local_presence_miner.domain.opportunity_intelligence import canonical
+from local_presence_miner.domain.opportunity_intelligence import canonical, reasoning_config
 from local_presence_miner.services.chatgpt_auth_service import RESOURCE, ChatGPTAuth
 
 
@@ -88,10 +88,15 @@ class ChatGPTInference:
             raise ValueError("ChatGPT model catalog could not be loaded.") from exc
 
     def run(self, body: dict, cancel: Event, timeout: int, max_bytes: int, *, expected_binding: str | None = None) -> dict:
-        allowed = {"model", "input", "instructions", "store", "stream"}
+        allowed = {"model", "input", "instructions", "store", "stream", "reasoning"}
         if (set(body) - allowed or body.get("store") is not False or body.get("stream") is not True
                 or not isinstance(body.get("input"), list) or not body.get("model")):
             raise ValueError("Unsupported ChatGPT request. No request was sent.")
+        if "reasoning" in body:
+            configuration = body["reasoning"]
+            if (not isinstance(configuration, dict) or set(configuration) != {"effort"}
+                    or reasoning_config(body["model"], configuration.get("effort")) != configuration):
+                raise ValueError("Unsupported ChatGPT reasoning configuration. No request was sent.")
         if timeout <= 0 or max_bytes <= 0 or cancel.is_set():
             raise InferenceError("cancelled")
         deadline = time.monotonic() + timeout
@@ -146,7 +151,15 @@ class ChatGPTInference:
                             if cancel.is_set() or result.get("status") not in {None, "completed"}:
                                 raise ValueError("ChatGPT response was not completed.")
                             finished.set()
-                            return {"text": "".join(output), "usage": result.get("usage"), "request_id": request_id}
+                            # Preserve provider metadata separately from requested settings.
+                            # Missing or malformed fields do not imply a provider default.
+                            reported_model = result.get("model")
+                            reasoning = result.get("reasoning")
+                            reported_effort = reasoning.get("effort") if isinstance(reasoning, dict) else None
+                            return {"text": "".join(output), "usage": result.get("usage"), "request_id": request_id,
+                                    "provider_model": reported_model if isinstance(reported_model, str) and 0 < len(reported_model) <= 200 else None,
+                                    "provider_reasoning_effort": reported_effort if isinstance(reported_effort, str) and reported_effort in
+                                    {"none", "minimal", "low", "medium", "high", "xhigh", "max", "ultra"} else None}
                         elif kind in {"response.failed", "response.incomplete", "error", "response.refusal.delta"}:
                             raise response_error(event.get("response", event))
                 finished.set()

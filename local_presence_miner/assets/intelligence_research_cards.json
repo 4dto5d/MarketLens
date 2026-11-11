@@ -1,0 +1,146 @@
+{
+  "schema_version": 1,
+  "cards": [
+    {
+      "version": "2026-11-10.1",
+      "reviewed_at": "2026-11-10",
+      "authority": "reviewed_research_method_not_business_fact",
+      "sources": [
+        {
+          "path": "02_Pricing_Reports/MarketLens_Pass5B_Executed_Report_20261104.md",
+          "sha256": "1bbf559c564a59a4475f13abe62420b30527c5177499929c6393d6abe87bac86",
+          "authority": "executed_study",
+          "section": "Scope cards O06/O11; cross-industry service catalog; common terms"
+        },
+        {
+          "path": "05_Pass5C_Continuity/MarketLens_Pass5C_XHIGH_Conversation_Handoff_Audited_20261104.md",
+          "sha256": "459c9932418aead0a581b1e231b19bfb49d84ea34272640e70c6072d1ac908e4",
+          "authority": "audited_correction",
+          "section": "First-project setup correction; Ben-workbook correction; objections and no-sale conditions"
+        }
+      ],
+      "economics": [
+        "Modeled research fees are not buyer budgets, quotes, validated market value or ROI.",
+        "Include unsuccessful acquisition, full first-project setup unless reusable work already exists, learning, revisions, support, travel, fees and cash costs.",
+        "Do not amortize setup over customers who do not exist. Ben assistance is hypothetical unless explicitly agreed; audited correction governs assistance calculations."
+      ],
+      "exclusions": [
+        "No automatic canonical Offer ID mapping or pricing.",
+        "No current platform-capability claim without current authoritative evidence.",
+        "No invented competence, demand, conversion or ranking lift."
+      ],
+      "id": "sign_print",
+      "title": "Sign/print: quote-ready intake versus existing-provider resolution",
+      "scope_reference": "O06",
+      "method": [
+        "Ask the estimator to demonstrate repeated missing specifications or artwork-handoff friction.",
+        "Compare exact native workflow, plan, permissions, staff use and provider help before proposing another form.",
+        "Practice a bounded workflow and acceptance cases on the actual supported tools before committing."
+      ],
+      "alternatives": [
+        "Native/provider help or training",
+        "Smaller separately scoped repair",
+        "No sale if estimator capacity or an adequate current process is the real constraint"
+      ],
+      "invalidators": [
+        "No demonstrated repeated problem",
+        "Unsupported file handling, production responsibility or missing delivery competence"
+      ]
+    },
+    {
+      "version": "2026-11-10.1",
+      "reviewed_at": "2026-11-10",
+      "authority": "reviewed_research_method_not_business_fact",
+      "sources": [
+        {
+          "path": "02_Pricing_Reports/MarketLens_Pass5B_Executed_Report_20261104.md",
+          "sha256": "1bbf559c564a59a4475f13abe62420b30527c5177499929c6393d6abe87bac86",
+          "authority": "executed_study",
+          "section": "Scope cards O06/O11; cross-industry service catalog; common terms"
+        },
+        {
+          "path": "05_Pass5C_Continuity/MarketLens_Pass5C_XHIGH_Conversation_Handoff_Audited_20261104.md",
+          "sha256": "459c9932418aead0a581b1e231b19bfb49d84ea34272640e70c6072d1ac908e4",
+          "authority": "audited_correction",
+          "section": "First-project setup correction; Ben-workbook correction; objections and no-sale conditions"
+        }
+      ],
+      "economics": [
+        "Modeled research fees are not buyer budgets, quotes, validated market value or ROI.",
+        "Include unsuccessful acquisition, full first-project setup unless reusable work already exists, learning, revisions, support, travel, fees and cash costs.",
+        "Do not amortize setup over customers who do not exist. Ben assistance is hypothetical unless explicitly agreed; audited correction governs assistance calculations."
+      ],
+      "exclusions": [
+        "No automatic canonical Offer ID mapping or pricing.",
+        "No current platform-capability claim without current authoritative evidence.",
+        "No invented competence, demand, conversion or ranking lift."
+      ],
+      "id": "b2b_cleaning",
+      "title": "B2B cleaning: buyer presentation versus capacity/procurement",
+      "scope_reference": "O11",
+      "method": [
+        "Distinguish an observed inquiry-path problem from owner-confirmed capability presentation, staffing or procurement constraints.",
+        "A narrow contact repair and a five-page capability site are different scopes; do not turn one into the other.",
+        "Confirm desired customer type, walkthrough process, provider coverage, supplied content and capacity before selecting an intervention."
+      ],
+      "alternatives": [
+        "Current provider or owner-managed change",
+        "Narrow contact-path repair if independently worthwhile",
+        "No demand project when capacity is constrained and no worthwhile operational need is established"
+      ],
+      "invalidators": [
+        "Staffing/procurement is the actual bottleneck",
+        "No approved business facts, authority, scope or supported delivery route"
+      ]
+    },
+    {
+      "version": "2026-11-10.1",
+      "reviewed_at": "2026-11-10",
+      "authority": "reviewed_research_method_not_business_fact",
+      "sources": [
+        {
+          "path": "02_Pricing_Reports/MarketLens_Pass5B_Executed_Report_20261104.md",
+          "sha256": "1bbf559c564a59a4475f13abe62420b30527c5177499929c6393d6abe87bac86",
+          "authority": "executed_study",
+          "section": "Scope cards O06/O11; cross-industry service catalog; common terms"
+        },
+        {
+          "path": "05_Pass5C_Continuity/MarketLens_Pass5C_XHIGH_Conversation_Handoff_Audited_20261104.md",
+          "sha256": "459c9932418aead0a581b1e231b19bfb49d84ea34272640e70c6072d1ac908e4",
+          "authority": "audited_correction",
+          "section": "First-project setup correction; Ben-workbook correction; objections and no-sale conditions"
+        }
+      ],
+      "economics": [
+        "Modeled research fees are not buyer budgets, quotes, validated market value or ROI.",
+        "Include unsuccessful acquisition, full first-project setup unless reusable work already exists, learning, revisions, support, travel, fees and cash costs.",
+        "Do not amortize setup over customers who do not exist. Ben assistance is hypothetical unless explicitly agreed; audited correction governs assistance calculations."
+      ],
+      "exclusions": [
+        "No automatic canonical Offer ID mapping or pricing.",
+        "No current platform-capability claim without current authoritative evidence.",
+        "No invented competence, demand, conversion or ranking lift."
+      ],
+      "id": "warm_editing",
+      "title": "Warm editing: task, access, training and platform alternatives",
+      "scope_reference": "Method applied to a hypothetical request",
+      "method": [
+        "Define the exact blocked editing task, observed outcome and desired independent workflow.",
+        "Verify account control, permissions and existing-provider responsibilities; do not infer platform limitations from the complaint.",
+        "Compare permissions/training and provider assistance before investigating a possible platform move.",
+        "A move requires separately verified target capability, asset/email/integration preservation, recovery, competence and explicit authority."
+      ],
+      "alternatives": [
+        "Permissions or task-specific training",
+        "Existing-provider resolution",
+        "Separately investigated platform move",
+        "Partner or decline if responsibility exceeds supported competence"
+      ],
+      "invalidators": [
+        "No exact task or authorized access",
+        "No verified target capability or recovery plan",
+        "A hypothetical request is not a confirmed customer or migration approval"
+      ]
+    }
+  ]
+}

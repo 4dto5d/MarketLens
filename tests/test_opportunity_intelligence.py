@@ -22,7 +22,7 @@ from local_presence_miner.time_utils import utc_now
 
 def advice_for(packet):
     unknown = {"assessment": "unknown", "evidence_ids": [], "assumptions": [], "missing_prerequisites": ["Owner access and operator readiness"]}
-    return {"schema_version": 1, "context_hash": packet["context_hash"], "status": "insufficient_evidence",
+    return {"schema_version": 2, "context_hash": packet["context_hash"], "status": "insufficient_evidence",
             "summary": "Synthetic fixture, not actual provider reasoning.", "interpretations": [], "contradictions": [],
             "owner_questions": [{"id": "q1", "question": "Which edit is blocked, and who controls the account?", "reason": "Access is unknown",
                                  "evidence_ids": [], "priority": "next"}],
@@ -160,7 +160,7 @@ def test_rescan_or_concurrent_owner_evidence_blocks_dispatch(setup):
 
 @pytest.mark.parametrize("mutation", [lambda a: a.update(approved=True), lambda a: a.update(context_hash="0" * 64),
                                       lambda a: a["owner_questions"][0].update(evidence_ids=["foreign"]),
-                                      lambda a: a.update(schema_version=2)])
+                                      lambda a: a.update(schema_version=99)])
 def test_invalid_output_retained_as_failed_not_adoptable(setup, mutation):
     _, factory, identity, service = setup
     with pytest.raises(ValueError):

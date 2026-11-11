@@ -1,0 +1,12 @@
+{
+  "command": [
+    "compileall",
+    "-q",
+    "-b",
+    "local_presence_miner",
+    "app.py"
+  ],
+  "source": "C:\\Users\\allin\\OneDrive\\Documents\\Local Presence Miner\\marketlens-response-version-correction-20261111\\worktree",
+  "exit_code": 0,
+  "seconds": 3.74
+}

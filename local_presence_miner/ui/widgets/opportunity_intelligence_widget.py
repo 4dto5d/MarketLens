@@ -25,7 +25,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from local_presence_miner.domain.opportunity_intelligence import MODES, canonical
+from local_presence_miner.domain.intelligence_research import research_cards
+from local_presence_miner.domain.opportunity_intelligence import MODE_TASKS, MODES, canonical, present_advice, supported_efforts
 from local_presence_miner.services.chatgpt_auth_service import ChatGPTAuth
 from local_presence_miner.services.chatgpt_inference_service import ChatGPTInference
 from local_presence_miner.services.opportunity_intelligence_service import OpportunityIntelligenceService
@@ -39,7 +40,8 @@ class WorkerSignals(QObject):
 def readable_context(prepared: dict) -> str:
     """Show disclosure in ordinary language; exact transport details remain inspectable."""
     packet = prepared["packet"]
-    lines = ["Your question", packet["question"], "", "What will be shared"]
+    lines = ["Your question", packet["question"], "", "Reasoning effort: " + str(packet.get("reasoning_effort") or "Model default"),
+             "", "What will be shared"]
     hidden = {"evidence_id", "context_hash", "source_sha256", "source_matches_current", "record_id", "id"}
 
     def render(value, indent=0):
@@ -59,10 +61,11 @@ def readable_context(prepared: dict) -> str:
 
     for title, key in (("Business context", "subject"), ("Selected findings", "evidence"), ("Owner information", "owner_context"),
                        ("Saved planning worksheet", "worksheet"), ("Current service decision", "commercial_context"),
-                       ("Delivery requirements", "delivery_context"), ("Selected research", "research_context"),
+                       ("Delivery requirements", "delivery_context"), ("Your self-reported capability", "operator_context"),
+                       ("Measured market evidence", "market_context"), ("Selected research", "research_context"),
                        ("Missing and excluded information", "coverage")):
         lines.extend(["", title])
-        render(packet[key])
+        render(packet.get(key, {"state": "not supplied"}))
     lines.extend(["", "Instructions accompanying this information",
                   "Use the supplied evidence only. Explain uncertainty, competing explanations and the next owner questions. "
                   "Assess technical feasibility, operator capability, commercial viability and execution readiness separately. "
@@ -71,9 +74,36 @@ def readable_context(prepared: dict) -> str:
     return "\n".join(lines)
 
 
-def readable_advice(advice: dict) -> str:
+def readable_advice(advice: dict, packet: dict | None = None) -> str:
     """Keep the main operator view practical; machine contracts stay in history."""
+    if packet:
+        advice = present_advice(advice, packet)
     lines = [advice["summary"], "", "Internal AI advice — confirm sources and owner facts before acting."]
+    registry = (packet or {}).get("source_registry", {})
+
+    def sources(item):
+        for reference in item.get("evidence_ids", []):
+            source = registry.get(reference, {})
+            state = "eligible for its stated use" if source.get("eligible") else "not established as eligible"
+            lines.append(f"  Source [{reference}]: {source.get('label', reference)} — {state}")
+
+    if packet:
+        current = packet.get("commercial_context", {})
+        scope_status = current.get("scope_status", "candidate")
+        lines.extend(["", "Current application decision — " + str(scope_status).replace("_", " "),
+                      "Canonical offer: " + str(current.get("offer_id") or "Unavailable"),
+                      "Scope: " + ("; ".join(current.get("scope", [])) or "Unavailable"),
+                      "Price available: " + ("Yes" if current.get("price_available") else "No"),
+                      "Application delivery state: " + str(packet.get("delivery_context", {}).get("state", "Unknown"))])
+    if advice.get("support_diagnostics"):
+        lines.extend(["", "Support checks — resolve before relying on this advice",
+                      *("• " + value for value in advice["support_diagnostics"])])
+    decision = advice.get("decision_review")
+    if decision:
+        lines.extend(["", "Decision brief", decision["recommendation"],
+                      "Decisive unknown: " + decision["decisive_unknown"],
+                      "What would change this: " + decision["would_change_if"]])
+        sources(decision)
     if advice["status"] == "insufficient_evidence":
         lines.append("More evidence is needed. This is not approval to quote or proceed.")
     for heading, items, field in (("Questions to ask next", advice["owner_questions"], "question"),
@@ -83,6 +113,7 @@ def readable_advice(advice: dict) -> str:
             lines.extend(["", heading])
             for item in items:
                 lines.append("• " + item[field])
+                sources(item)
                 if item.get("reason"):
                     lines.append("  Why: " + item["reason"])
                 if item.get("unresolved_question"):
@@ -94,12 +125,14 @@ def readable_advice(advice: dict) -> str:
                        ("commercial", "Commercial viability"), ("execution", "Permission and execution readiness")):
         item = advice["feasibility"][key]
         lines.append(title + ": " + item["assessment"].replace("_", " "))
+        sources(item)
         lines.extend("  Needs confirmation: " + value for value in item["missing_prerequisites"])
         lines.extend("  Assumption: " + value for value in item["assumptions"])
     if advice["alternatives"]:
         lines.extend(["", "Possible approaches — candidate scope only"])
         for option in advice["alternatives"]:
             lines.append("• " + option["label"] + " — " + option["disposition"].replace("_", " "))
+            sources(option)
             for key, title in (("candidate_deliverables", "Possible work"), ("dependencies", "Dependency"),
                                ("exclusions", "Excludes"), ("risks", "Risk")):
                 lines.extend("  " + title + ": " + value for value in option[key])
@@ -109,13 +142,19 @@ def readable_advice(advice: dict) -> str:
             lines.append("• " + item["task"] + ": " + item["missing_driver"])
             if item["hours_low"] is not None:
                 lines.append(f"  Unvalidated range: {item['hours_low']}–{item['hours_high']} hours. {item['rationale']}")
-    for heading, values in (("Next actions", [item["action"] for item in advice["next_actions"]]),
-                             ("Conclusions the evidence does not support", advice["unsupported_conclusions"]),
+    if advice["next_actions"]:
+        lines.extend(["", "Next actions"])
+        for item in advice["next_actions"]:
+            lines.append("• " + item["action"])
+            sources(item)
+            lines.append("  Open: " + item["destination"])
+    for heading, values in (("Conclusions the evidence does not support", advice["unsupported_conclusions"]),
                              ("Limitations", advice["limitations"])):
         if values:
             lines.extend(["", heading, *("• " + value for value in values)])
     lines.extend(["", "Select a question or next action below to review and append it to a new worksheet revision. "
-                  "Exact source references and the structured response remain available in retained history."])
+                  "Saved planning does not update Call Guide, proposals or owner confirmation. Record actual owner answers separately. "
+                  "Use the source selector to inspect the retained evidence snapshot."])
     return "\n".join(lines)
 
 
@@ -125,7 +164,8 @@ class ContextPreviewDialog(QDialog):
         self.setWindowTitle("Review what will be shared with OpenAI")
         self.resize(850, 650)
         layout = QVBoxLayout(self)
-        label = QLabel(f"ChatGPT account: {account.get('label', 'Connected account')}\nModel: {prepared['model']} · {prepared['packet']['mode']}\n"
+        label = QLabel(f"ChatGPT account: {account.get('label', 'Connected account')}\nModel: {prepared['model']} · {prepared['packet']['mode']} · "
+                       f"Effort: {prepared['packet'].get('reasoning_effort') or 'Model default'}\n"
                        "Only the information below will be sent, with instructions for producing internal advice. "
                        "Sending does not approve a service, price or customer contact.")
         label.setTextFormat(Qt.TextFormat.PlainText)
@@ -171,12 +211,14 @@ class Worker(QRunnable):
             safe.update(timeout="The local deadline was reached. No partial answer was adopted; retry explicitly if needed.",
                         cancelled="Request cancelled. No partial answer was adopted; remote usage may already have occurred.",
                         processing_limit="The stream exceeded a local processing bound; no partial answer was adopted.")
+            safe["invalid_citation"] = "The answer contained an unknown source reference. Nothing was adopted. A new request requires explicit approval."
             fallback = "Request unavailable, cancelled, or invalid. Review connection, evidence and local/provider limits."
             self.signals.finished.emit((False, safe.get(code, fallback)))
 
 
 class OpportunityIntelligenceWidget(QWidget):
     worksheet_adopted = Signal(object)
+    destination_requested = Signal(str)
 
     def __init__(self, factory, lead_id: int, parent=None, *, auth=None, inference=None, service=None):
         super().__init__(parent)
@@ -188,6 +230,9 @@ class OpportunityIntelligenceWidget(QWidget):
         self.generation = 0
         self.worker: Worker | None = None
         self.result = None
+        self._result_request_signature = None
+        self._pending_request_signature = None
+        self._pending_input_signature = None
         self.busy = False
         self.worksheet_reader: Callable[[], dict] | None = None
         layout = QFormLayout(self)
@@ -213,15 +258,69 @@ class OpportunityIntelligenceWidget(QWidget):
         layout.addRow(self.disconnect_button)
         self.models = QComboBox()
         layout.addRow("Account-supported model", self.models)
+        self.effort = QComboBox()
+        self.models.currentIndexChanged.connect(self.refresh_efforts)
+        self.refresh_efforts()
+        layout.addRow("Reasoning effort", self.effort)
         self.mode = QComboBox()
         self.mode.addItems(list(MODES))
         layout.addRow("Mode", self.mode)
+        self.mode_help = QLabel()
+        self.mode_help.setWordWrap(True)
+        self.mode_help.setTextFormat(Qt.TextFormat.PlainText)
+        self.mode.currentTextChanged.connect(lambda mode: self.mode_help.setText(MODE_TASKS[mode]))
+        self.mode_help.setText(MODE_TASKS[self.mode.currentText()])
+        layout.addRow(self.mode_help)
         self.question = QLineEdit()
         self.question.setMaxLength(4000)
         self.question.setPlaceholderText("What should I verify before offering this service?")
         layout.addRow("Question", self.question)
         self.include_worksheet = QCheckBox("Include saved operator worksheet (may contain private owner text)")
         layout.addRow(self.include_worksheet)
+        self.include_owner_context = QCheckBox("Include recorded owner goals/capacity and their attribution (may contain private text)")
+        self.include_commercial_explanation = QCheckBox("Include detailed offer reasoning (may contain owner context)")
+        self.include_market = QCheckBox("Include existing eligible market evidence and its measured geography")
+        for control in (self.include_owner_context, self.include_commercial_explanation, self.include_market):
+            layout.addRow(control)
+        self.include_operator = QCheckBox("Include my self-reported capability and limits for this request")
+        layout.addRow(self.include_operator)
+        self.operator_group = QWidget()
+        operator_layout = QFormLayout(self.operator_group)
+        self.operator_fields = {}
+        self.operator_states = {}
+        for key, label in (("experience", "Relevant experience (including AI assistance)"),
+                           ("demonstration", "Demonstration or sample reference"), ("tools", "Exact tools / platforms"),
+                           ("assistance", "Help actually available"), ("capacity", "Time / capacity available"),
+                           ("limits", "Limits / work requiring a partner")):
+            if key in {"experience", "demonstration"}:
+                state = QComboBox()
+                for title, value in (("Unknown / not attested", "unknown"),
+                                     ("Yes, for this task (self-reported)", "affirmative"),
+                                     ("None for this task", "none")):
+                    state.addItem(title, value)
+                self.operator_states[key + "_state"] = state
+                operator_layout.addRow(label + " status", state)
+            field = QLineEdit()
+            field.setMaxLength(1000)
+            self.operator_fields[key] = field
+            operator_layout.addRow(label, field)
+        self.operator_group.hide()
+        self.include_operator.toggled.connect(self.operator_group.setVisible)
+        layout.addRow(self.operator_group)
+        self.research = QListWidget()
+        self.research.setMaximumHeight(85)
+        try:
+            cards = research_cards()
+        except (ValueError, OSError):
+            cards = []
+            self.research.setToolTip("Research catalog unavailable or changed; normal offline workflows remain available.")
+        for card in cards:
+            item = QListWidgetItem(card["title"])
+            item.setData(Qt.ItemDataRole.UserRole, card["id"])
+            item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+            item.setCheckState(Qt.CheckState.Unchecked)
+            self.research.addItem(item)
+        layout.addRow("Optional research methods (none selected; not market validation)", self.research)
         self.findings = QListWidget()
         self.findings.setMaximumHeight(100)
         self.refresh_findings()
@@ -245,6 +344,11 @@ class OpportunityIntelligenceWidget(QWidget):
         self.output.setReadOnly(True)
         self.output.setMaximumHeight(250)
         layout.addRow(self.output)
+        self.sources = QComboBox()
+        layout.addRow("Retained sources", self.sources)
+        self.source_button = QPushButton("Inspect selected source snapshot")
+        self.source_button.clicked.connect(self.inspect_source)
+        layout.addRow(self.source_button)
         self.items = QComboBox()
         layout.addRow("Select one planning item", self.items)
         self.adopt_button = QPushButton("Review and append selected question / next action")
@@ -259,12 +363,105 @@ class OpportunityIntelligenceWidget(QWidget):
         history = QPushButton("View retained advice history")
         history.clicked.connect(self.history)
         layout.addRow(history)
+        self.destination = QComboBox()
+        self.destination.addItems(["Audit Evidence", "Record Contact", "Smart Offer", "Delivery Review", "Guided Call", "CRM"])
+        layout.addRow("Continue in existing workflow", self.destination)
+        navigate = QPushButton("Open selected workflow — record real owner answers separately")
+        navigate.clicked.connect(lambda: self.destination_requested.emit(self.destination.currentText()))
+        layout.addRow(navigate)
         usage = QLabel('<a href="https://chatgpt.com/#settings/Usage">ChatGPT Settings → Usage</a>')
         usage.setOpenExternalLinks(True)
         layout.addRow(usage)
         self.controls = [self.connect_button, self.disconnect_button, self.models, self.mode, self.question,
-                         self.include_worksheet, self.findings, self.limit, self.run_button]
+                         self.include_worksheet, self.findings, self.limit, self.run_button, self.effort,
+                         self.include_owner_context, self.include_market, self.include_commercial_explanation,
+                         self.include_operator, self.operator_group, self.research]
+        for field in [self.question, *self.operator_fields.values()]:
+            field.textChanged.connect(self._inputs_changed)
+        for choice_control in (self.models, self.effort, self.mode, *self.operator_states.values()):
+            choice_control.currentIndexChanged.connect(self._inputs_changed)
+        for disclosure_control in (self.include_worksheet, self.include_owner_context, self.include_market,
+                                   self.include_commercial_explanation, self.include_operator):
+            disclosure_control.toggled.connect(self._inputs_changed)
+        self.findings.itemChanged.connect(self._inputs_changed)
+        self.research.itemChanged.connect(self._inputs_changed)
+        for evidence_list in (self.findings, self.research):
+            evidence_list.model().rowsInserted.connect(self._inputs_changed)
+            evidence_list.model().rowsRemoved.connect(self._inputs_changed)
+            evidence_list.model().modelReset.connect(self._inputs_changed)
         self.toggle(False)
+
+    def _request_options(self):
+        operator = {key: field.text().strip() for key, field in self.operator_fields.items()}
+        operator.update({key: control.currentData() for key, control in self.operator_states.items()})
+        return dict(question=self.question.text().strip(), mode=self.mode.currentText(), model=self.models.currentData(),
+                    account_binding=(self.auth.account() or {}).get("binding", ""),
+                    selected=[self.findings.item(i).data(Qt.ItemDataRole.UserRole) for i in range(self.findings.count())
+                              if self.findings.item(i).checkState() == Qt.CheckState.Checked],
+                    include_worksheet=self.include_worksheet.isChecked(),
+                    include_owner_context=self.include_owner_context.isChecked(),
+                    include_market=self.include_market.isChecked(),
+                    include_commercial_explanation=self.include_commercial_explanation.isChecked(),
+                    operator_context=operator if self.include_operator.isChecked() else None,
+                    research_ids=sorted(self.research.item(i).data(Qt.ItemDataRole.UserRole)
+                                        for i in range(self.research.count())
+                                        if self.research.item(i).checkState() == Qt.CheckState.Checked),
+                    reasoning_effort=self.effort.currentData())
+
+    def _input_signature(self):
+        return canonical(self._request_options())
+
+    def _inputs_changed(self, *_):
+        if (self.result is not None or self._pending_input_signature is not None) and self._input_signature() != self._pending_input_signature:
+            self.cancel()
+            self.status.setText("Request inputs changed — create and review a fresh brief before appending planning.")
+
+    def _prepare_current(self):
+        self.check_unsaved()
+        return self.service.prepare(self.lead_id, **self._request_options())
+
+    def refresh_efforts(self):
+        current = self.effort.currentData()
+        self.effort.clear()
+        self.effort.addItem("Use model default", None)
+        for effort in supported_efforts(self.models.currentData()):
+            self.effort.addItem(effort.capitalize(), effort)
+        index = self.effort.findData(current)
+        self.effort.setCurrentIndex(max(0, index))
+
+    def populate_sources(self, packet: dict, prefix: str = "", *, clear: bool = True):
+        if clear:
+            self.sources.clear()
+        for alias, source in packet.get("source_registry", {}).items():
+            self.sources.addItem(f"{prefix}[{alias}] {source.get('label', alias)}", (packet, alias))
+        self.source_button.setEnabled(self.sources.count() > 0)
+
+    def inspect_source(self):
+        selection = self.sources.currentData()
+        if selection is None:
+            return
+        packet, alias = selection
+        source = packet["source_registry"][alias]
+        snapshot = source.get("snapshot", packet.get(alias))
+        if snapshot is None:
+            snapshot = next((item for key in ("evidence", "research_context") for item in packet.get(key, [])
+                             if item.get("id") == alias), None)
+        if snapshot is None and source.get("snapshot_path"):
+            snapshot = packet
+            path = source["snapshot_path"]
+            for key in (path.split(".") if isinstance(path, str) else path):
+                snapshot = snapshot.get(key) if isinstance(snapshot, dict) else None
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Retained source snapshot — historical evidence, not current approval")
+        dialog.resize(750, 550)
+        layout = QVBoxLayout(dialog)
+        text = QPlainTextEdit(json.dumps({"source": source, "snapshot": snapshot}, indent=2, ensure_ascii=False))
+        text.setReadOnly(True)
+        layout.addWidget(text)
+        close = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
+        close.rejected.connect(dialog.reject)
+        layout.addWidget(close)
+        dialog.exec()
 
     def refresh_findings(self):
         self.findings.clear()
@@ -284,7 +481,7 @@ class OpportunityIntelligenceWidget(QWidget):
         for control in self.controls:
             control.setEnabled(enabled and not self.busy)
         self.cancel_button.setEnabled(self.busy)
-        self.adopt_button.setEnabled(enabled and not self.busy and self.result is not None)
+        self.adopt_button.setEnabled(enabled and not self.busy and self.result is not None and self.items.count() > 0)
         self.note_button.setEnabled(enabled and not self.busy and self.result is not None)
         self.reject_button.setEnabled(enabled and not self.busy and self.result is not None)
         if not enabled:
@@ -296,8 +493,13 @@ class OpportunityIntelligenceWidget(QWidget):
         self.cancel_event.set()
         self.generation += 1
         self.result = None
+        self._result_request_signature = None
+        self._pending_request_signature = None
+        self._pending_input_signature = None
         self.items.clear()
         self.adopt_button.setEnabled(False)
+        self.note_button.setEnabled(False)
+        self.reject_button.setEnabled(False)
 
     def _start(self, function, kind):
         if self.busy:
@@ -332,8 +534,20 @@ class OpportunityIntelligenceWidget(QWidget):
                 self.models.clear()
                 self.status.setText("Signed out." if result else "Signed out locally; remote revocation was not confirmed. Disconnect in ChatGPT Settings.")
             else:
+                try:
+                    current = self._prepare_current()
+                    if (self._input_signature() != self._pending_input_signature
+                            or current["request_signature"] != self._pending_request_signature):
+                        raise ValueError("Request inputs changed. Create and review a fresh brief.")
+                except (ValueError, TypeError) as exc:
+                    self.cancel()
+                    self.status.setText(str(exc))
+                    self.toggle(self.enabled.isChecked())
+                    return
                 self.result = result
-                self.output.setPlainText(readable_advice(result["advice"]))
+                self._result_request_signature = self._pending_request_signature
+                self.output.setPlainText(readable_advice(result["advice"], result.get("packet")))
+                self.populate_sources(result.get("packet", {}))
                 self.items.clear()
                 for item in result["advice"]["owner_questions"]:
                     self.items.addItem(item["question"], (item["id"], item["question"]))
@@ -362,15 +576,16 @@ class OpportunityIntelligenceWidget(QWidget):
             account = self.auth.account()
             if account is None:
                 raise ValueError("Continue with ChatGPT first.")
-            selected = [self.findings.item(i).data(Qt.ItemDataRole.UserRole) for i in range(self.findings.count())
-                        if self.findings.item(i).checkState() == Qt.CheckState.Checked]
-            prepared = self.service.prepare(self.lead_id, question=self.question.text(), mode=self.mode.currentText(),
-                                            model=self.models.currentData(), account_binding=account["binding"],
-                                            selected=selected, include_worksheet=self.include_worksheet.isChecked())
+            prepared = self._prepare_current()
             dialog = ContextPreviewDialog(prepared, account, self)
             if dialog.exec() != QDialog.DialogCode.Accepted:
                 return
+            if self._prepare_current()["request_signature"] != prepared["request_signature"]:
+                raise ValueError("Request inputs changed during preview. Review a fresh brief before sending.")
             self.result = None
+            self._result_request_signature = None
+            self._pending_request_signature = prepared["request_signature"]
+            self._pending_input_signature = self._input_signature()
             self.service.budget.set_limit(self.limit.value())
             def execute():
                 return self.service.execute(prepared, self.inference, cancel=self.cancel_event,
@@ -391,13 +606,17 @@ class OpportunityIntelligenceWidget(QWidget):
         if not ok:
             return
         try:
-            self.check_unsaved()
+            current = self._prepare_current()
+            if current["request_signature"] != self._result_request_signature:
+                self.cancel()
+                raise ValueError("Request inputs changed. Create and review a fresh brief before appending planning.")
             account = self.auth.account() or {}
             identity = self.service.adopt(self.result["run_id"], lead_id=self.lead_id, account_binding=account.get("binding", ""),
-                                          item_id=item_id, actor=actor, edited_text=edited)
+                                          item_id=item_id, actor=actor, edited_text=edited,
+                                          active_request_signature=current["request_signature"])
             self.result = None
             self.adopt_button.setEnabled(False)
-            self.status.setText(f"Appended as operator planning in worksheet {identity}. Reopen Guided Opportunity to load the new revision.")
+            self.status.setText(f"Saved planning note in worksheet {identity}. Record the actual owner answer separately; commercial state was not changed.")
             from local_presence_miner.services.opportunity_workflow_service import latest_worksheet
 
             with self.factory() as session:
@@ -415,10 +634,24 @@ class OpportunityIntelligenceWidget(QWidget):
                 raise ValueError("Save current worksheet edits before running or adopting intelligence.")
 
     def history(self):
-        self.result = None
-        self.items.clear()
-        self.adopt_button.setEnabled(False)
-        self.output.setPlainText(json.dumps(self.service.history(self.lead_id), indent=2, ensure_ascii=False))
+        self.cancel()
+        self.toggle(self.enabled.isChecked())
+        lines = []
+        self.sources.clear()
+        for row in self.service.history(self.lead_id):
+            receipt = row.get("result") or {}
+            lines.extend([f"Run {row['id']} · {row['created_at']} · {row['model']} · {row['status']}",
+                          "Requested model: " + row["model"],
+                          "Requested effort: " + str(row["packet"].get("reasoning_effort") or "Model default"),
+                          "Provider-reported model: " + str(receipt.get("provider_model") or "Unavailable"),
+                          "Provider-reported effective effort: " + str(receipt.get("provider_reasoning_effort") or "Unavailable"),
+                          "Interpretation policy: " + str(row["packet"].get("policy_version") or "Unavailable"),
+                          "Current eligibility: " + row["eligibility"]["reason"]])
+            if row.get("advice"):
+                lines.append(readable_advice(row["advice"], row["packet"]))
+            lines.extend(["Retained reviews: " + str(len(row["reviews"])), ""])
+            self.populate_sources(row["packet"], f"Run {row['id']} ", clear=False)
+        self.output.setPlainText("\n".join(lines) or "No retained advice.")
 
     def review(self, action):
         if not self.enabled.isChecked() or self.busy or self.result is None:
